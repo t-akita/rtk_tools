@@ -2,7 +2,7 @@
 
 import numpy as np
 import yaml
-import threading
+import time
 
 import roslib
 import rospy
@@ -45,13 +45,6 @@ def cb_pagebwd():
 def cb_save():
    return
 
-def cb_scan():
-  if rtkPage.pageNo<0: return
-  rtkPage.reload()
-  print yaml.dump(rtkWidget.Param)
-  t=threading.Timer(1,cb_scan)
-  t.start()
-
 def cb_close():
   rtkPage.pageNo=-1
   return
@@ -79,8 +72,9 @@ ttk.Button(ctrl,text="Save",command=cb_save).grid(row=1,column=3,padx=1,pady=1,s
 rtkPage.show(0)
 ctrl.pack(fill='x',anchor='sw',expand=1)
 
-cb_scan()
+t1=time.time()
 while rtkPage.pageNo>=0 and not rospy.is_shutdown():
   root.update()
-rtkPage.pageNo=-1
-
+  if time.time()-t1>1:
+    rtkPage.reload()
+    t1=time.time()

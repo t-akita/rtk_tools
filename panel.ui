@@ -9,6 +9,7 @@
 "class":"Pub",    "name":"/request/capture","label":"3Dスキャン"
 "class":"Pub",    "name":"/request/clear","label":"クリア"
 "class":"Echo",   "name":"/rovi/pcount","label":"撮像点数"
+"class":"Echo",   "name":"/robot/tf","label":"座標 X\nY\nZ\nQx\nQy\nQz"
 "class":"Title",  "label":"3.クロップ","page":"break"
 "class":"Number", "name":"/cropper/cropZ","label":"Zクロップ"
 "class":"Number", "name":"/cropper/cropR","label":"Rクロップ"
