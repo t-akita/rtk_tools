@@ -1,13 +1,12 @@
-from .widget import rtkWidget
+from .topic import rtkTopic
 
 import Tkinter as tk
 import ttk
 import subprocess
 import roslib
 import rospy
-import yaml
 
-class rtkEcho(rtkWidget):
+class rtkEcho(rtkTopic):
   width=16
   def cb_sub(self,msg):
     sa=str(msg).split("\n")
@@ -23,26 +22,17 @@ class rtkEcho(rtkWidget):
       if h<self.height: sd=sd+"\n"
       else: break
     self.disp=sd
-  def connect(self):
-    cmd="rostopic type "+self.prop["name"]
-    try:
-      res=subprocess.check_output(cmd.split(" "))
-      typ=res.split("/")
-      exec("from "+typ[0].strip()+".msg import "+typ[1].strip()+" as topic_type")
-      rospy.Subscriber(self.prop["name"],topic_type,self.cb_sub)
-      self.discon=False
-    except:
-      print "No topic",self.prop["name"]
+  def on_connect(self,topic_type):
+    rospy.Subscriber(self.prop["name"],topic_type,self.cb_sub)
   def __init__(self,page,prop):
     super(rtkEcho,self).__init__(page,prop)
     self.height=1+prop["label"].count("\n")
     self.io=tk.Text(page.frame,width=self.width,height=self.height)
     self.io.grid(row=len(page.widgets),column=2,sticky="nsw")
-    self.discon=True
     self.disp=""
     self.dimmer=0
   def reflesh(self):
-    if self.discon: self.connect()
+    if self.discon: super(rtkEcho,self).reflesh()
     elif len(self.disp)>0:
       self.io.config(state='normal')
       self.io.config(foreground='#000000')
