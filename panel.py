@@ -3,6 +3,7 @@
 import numpy as np
 import yaml
 import time
+import sys
 
 import roslib
 import rospy
@@ -49,8 +50,18 @@ def cb_close():
   rtkPage.pageNo=-1
   return
 
+################
+def parse_argv(argv):
+  args={}
+  for arg in argv:
+    tokens = arg.split(":=")
+    if len(tokens) == 2:
+      key = tokens[0]
+      args[key]=tokens[1]
+  return args
 ####ROS Init####
 rospy.init_node("rtk_panel",anonymous=True)
+Config=parse_argv(sys.argv)
 
 ####Layout####
 root=tk.Tk()
@@ -59,7 +70,10 @@ root.title("panel")
 root.geometry("300x800+0+0")
 root.protocol("WM_DELETE_WINDOW", cb_close)
 
-loadwidget("panel.ui")
+if "conf" in Config:
+  loadwidget(Config["conf"])
+else:
+  loadwidget("panel.ui")
 
 ctrl=tk.Frame(root,bd=2,background='#444444')
 ctrl.columnconfigure(1,weight=1)
