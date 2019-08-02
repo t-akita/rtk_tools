@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rtk_tools" type="panel.py" name="" args="conf:=$(find rtk_tools)/test/panel.ui" output="screen" />
+</launch>

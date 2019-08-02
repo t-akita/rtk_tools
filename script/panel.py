@@ -10,13 +10,13 @@ import rospy
 
 import Tkinter as tk
 import ttk
-from src.widget import rtkWidget
-from src.page import rtkPage
-from src.text import rtkText
-from src.number import rtkNumber
-from src.echo import rtkEcho
-from src.pub import rtkPub
-from src.title import rtkTitle
+from rtk_tools.widget import rtkWidget
+from rtk_tools.page import rtkPage
+from rtk_tools.text import rtkText
+from rtk_tools.number import rtkNumber
+from rtk_tools.echo import rtkEcho
+from rtk_tools.pub import rtkPub
+from rtk_tools.title import rtkTitle
 
 def loadwidget(filename):
   page=rtkPage(root)
@@ -60,6 +60,7 @@ def parse_argv(argv):
       args[key]=tokens[1]
   return args
 ####ROS Init####
+t0=time.time()
 rospy.init_node("rtk_panel",anonymous=True)
 Config=parse_argv(sys.argv)
 
@@ -75,6 +76,8 @@ if "conf" in Config:
 else:
   loadwidget("panel.ui")
 
+print "file loaded",time.time()-t0
+
 ctrl=tk.Frame(root,bd=2,background='#444444')
 ctrl.columnconfigure(1,weight=1)
 ctrl.columnconfigure(2,weight=1)
@@ -87,6 +90,7 @@ rtkPage.show(0)
 ctrl.pack(fill='x',anchor='sw',expand=1)
 
 t1=time.time()
+print "loop start",time.time()-t0
 while rtkPage.pageNo>=0 and not rospy.is_shutdown():
   root.update()
   if time.time()-t1>1:

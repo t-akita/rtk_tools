@@ -15,7 +15,6 @@ class rtkText(rtkWidget):
     self.io.grid(row=len(page.widgets),column=2,sticky="ns")
     self.io.insert(0,'---')
     self.value=''
-    self.reflesh()
     self.io.bind('<Key-Return>',self.on_change)
     self.io.bind('<Key>',self.on_key)
 
