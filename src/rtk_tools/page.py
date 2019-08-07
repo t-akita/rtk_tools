@@ -19,16 +19,13 @@ class rtkPage(object):
   def show(diff):
     if diff==0:
       rtkPage.pages[rtkPage.pageNo].frame.pack(fill='x',anchor='nw',expand=1)
-      rtkPage.reload()
     elif diff>0:
       if rtkPage.pageNo>=len(rtkPage.pages)-1: return
       rtkPage.pages[rtkPage.pageNo].frame.pack_forget()
       rtkPage.pageNo=rtkPage.pageNo+1
       rtkPage.pages[rtkPage.pageNo].frame.pack(fill='x',anchor='nw',expand=1)
-      rtkPage.reload()
     else:
       if rtkPage.pageNo<=0: return
       rtkPage.pages[rtkPage.pageNo].frame.pack_forget()
       rtkPage.pageNo=rtkPage.pageNo-1
       rtkPage.pages[rtkPage.pageNo].frame.pack(fill='x',anchor='nw',expand=1)
-      rtkPage.reload()
