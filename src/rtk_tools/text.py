@@ -8,6 +8,7 @@ import roslib
 import rospy
 
 class rtkText(rtkWidget):
+  interval=1
   def __init__(self,page,prop):
     super(rtkText,self).__init__(page,prop)
     self.parse(prop["name"])
@@ -17,6 +18,7 @@ class rtkText(rtkWidget):
     self.value=''
     self.io.bind('<Key-Return>',self.on_change)
     self.io.bind('<Key>',self.on_key)
+    self.set_timeout(1)
 
   def parse(self,str):
     keys=str.split("/")
@@ -44,11 +46,13 @@ class rtkText(rtkWidget):
     self.io.config(foreground='#000000')
   def on_key(self,event):
     self.io.config(foreground='#FF0000')    
-  def reflesh(self):
+  def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])
       if value!=self.value:
         self.set(value)
     except:
       rospy.logwarn("param "+self.prop["name"]+" not found")
+    self.set_timeout(self.interval)
     return
+

@@ -22,17 +22,17 @@ class rtkEcho(rtkTopic):
       if h<self.height: sd=sd+"\n"
       else: break
     self.disp=sd
-  def on_connect(self,topic_type):
-    rospy.Subscriber(self.prop["name"],topic_type,self.cb_sub)
+    self.set_timeout(0)
   def __init__(self,page,prop):
     super(rtkEcho,self).__init__(page,prop)
     self.height=1+prop["label"].count("\n")
     self.io=tk.Text(page.frame,width=self.width,height=self.height)
     self.io.grid(row=len(page.widgets),column=2,sticky="nsw")
     self.disp=""
-    self.dimmer=0
-  def reflesh(self):
-    if self.discon: super(rtkEcho,self).reflesh()
+  def on_connect(self,topic_type):
+    rospy.Subscriber(self.prop["name"],topic_type,self.cb_sub)
+  def on_timeout(self):
+    if self.discon: super(rtkEcho,self).on_timeout()
     elif len(self.disp)>0:
       self.io.config(state='normal')
       self.io.config(foreground='#000000')
@@ -40,10 +40,9 @@ class rtkEcho(rtkTopic):
       self.io.insert("0.0",self.disp)
       self.io.config(state='disabled')
       self.disp=""
-      self.dimmer=5
-    elif self.dimmer>0:
-      self.dimmer=self.dimmer-1
-      if self.dimmer==0:
-        self.io.config(state='normal')
-        self.io.config(foreground='#AAAAAA')
-        self.io.config(state='disabled')
+      self.set_timeout(5)
+    else:
+      self.io.config(state='normal')
+      self.io.config(foreground='#AAAAAA')
+      self.io.config(state='disabled')
+

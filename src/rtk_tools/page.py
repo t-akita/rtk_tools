@@ -2,6 +2,7 @@ from .widget import rtkWidget
 
 import Tkinter as tk
 import ttk
+import time
 
 class rtkPage(object):
   pages=[]
@@ -12,9 +13,9 @@ class rtkPage(object):
     self.frame=tk.Frame(root,bd=2,background='#AAAAAA')
     self.frame.columnconfigure(1,weight=1)
   @staticmethod
-  def reload():
+  def update():
     for w in rtkPage.pages[rtkPage.pageNo].widgets:
-      w.reflesh()
+      w.update(time.time())
   @staticmethod
   def show(diff):
     if diff==0:

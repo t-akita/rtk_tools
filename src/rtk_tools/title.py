@@ -11,6 +11,6 @@ class rtkTitle(rtkWidget):
     self.label.config(anchor='w')
     self.label.grid_forget()
     self.label.grid(row=len(page.widgets),column=1,columnspan=2,sticky="nsew")
-  def reflesh(self):
-    return
+  def on_timeout(self):
+    pass
 

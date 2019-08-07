@@ -12,7 +12,6 @@ class rtkNumber(rtkText):
     super(rtkNumber,self).__init__(page,prop)
 
   def set(self,value):
-    print "type",type(value)
     if type(value) is str:
       super(rtkNumber,self).set(value)
     else:
@@ -21,7 +20,6 @@ class rtkNumber(rtkText):
       param=eval(self.lb+str(value)+self.rb)
       self.merge(self.Param,param)
       self.value=value
-      print "set as number",value
       rospy.set_param(self.prop["name"],value)
   def on_change(self,event):
     try:
@@ -34,7 +32,7 @@ class rtkNumber(rtkText):
       self.io.config(foreground='#000000')
     except:
       super(rtkNumber,self).on_change(event)
-  def reflesh(self):
+  def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])
       if type(value) is str:
@@ -46,4 +44,5 @@ class rtkNumber(rtkText):
         self.set(value)
     except:
       rospy.logwarn("param "+self.prop["name"]+" not found or wrong number")
+    self.set_timeout(self.interval)
     return

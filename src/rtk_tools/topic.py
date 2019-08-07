@@ -13,6 +13,7 @@ class rtkTopic(rtkWidget):
     cmd="rostopic type "+self.prop["name"]
     try:
       res=subprocess.check_output(cmd.split(" "))
+      rospy.logwarn("Topi type "+res)
       typ=res.split("/")
       exec("from "+typ[0].strip()+".msg import "+typ[1].strip()+" as topic_type")
       self.on_connect(topic_type)
@@ -22,5 +23,8 @@ class rtkTopic(rtkWidget):
   def __init__(self,page,prop):
     super(rtkTopic,self).__init__(page,prop)
     self.discon=True
-  def reflesh(self):
+    self.set_timeout(1)
+  def on_timeout(self):
     if self.discon: self.connect()
+    if self.discon: self.set_timeout(1)
+

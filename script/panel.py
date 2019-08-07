@@ -89,10 +89,8 @@ ttk.Button(ctrl,text="Save",command=cb_save).grid(row=1,column=3,padx=1,pady=1,s
 rtkPage.show(0)
 ctrl.pack(fill='x',anchor='sw',expand=1)
 
-t1=time.time()
 print "loop start",time.time()-t0
 while rtkPage.pageNo>=0 and not rospy.is_shutdown():
   root.update()
-  if time.time()-t1>1:
-    rtkPage.reload()
-    t1=time.time()
+  rtkPage.update()
+

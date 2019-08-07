@@ -14,7 +14,7 @@ class rtkPub(rtkTopic):
     else:
       self.pub.publish(self.msg)
       self.label.config(background='#555555')
-    self.dimmer=1
+    self.set_timeout(0.1)
   def on_connect(self,topic_type):
     self.pub=rospy.Publisher(self.prop["name"],topic_type,queue_size=1)
     self.msg=topic_type()
@@ -24,11 +24,7 @@ class rtkPub(rtkTopic):
     super(rtkPub,self).__init__(page,prop)
     self.io=tk.Button(page.frame,text="Do",command=self.cb_pub)
     self.io.grid(row=len(page.widgets),column=2,sticky="nsw")
-    self.dimmer=0
-  def reflesh(self):
-    if self.discon: super(rtkPub,self).reflesh()
-    if self.dimmer>0:
-      self.dimmer=self.dimmer-1
-      if self.dimmer==0:
-        self.label.config(background='#CCCCCC')
-    return
+  def on_timeout(self):
+    if self.discon: super(rtkPub,self).on_timeout()
+    self.label.config(background=self.bgcolor)
+

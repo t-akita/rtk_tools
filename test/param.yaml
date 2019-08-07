@@ -16,6 +16,7 @@ rovi:
       Gain: 0
     projector:
       Intencity: 255
+      Mode: 1
 searcher:
   distance_threshold: 1.5
   icp_threshold: 5.0
