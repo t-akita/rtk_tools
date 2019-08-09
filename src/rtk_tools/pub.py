@@ -1,14 +1,17 @@
 from .topic import rtkTopic
 
 import Tkinter as tk
+import tkMessageBox
 import ttk
-
 import roslib
 import rospy
 from std_msgs.msg import Bool
 
 class rtkPub(rtkTopic):
   def cb_pub(self):
+    x=self.io.winfo_rootx()
+    y=self.io.winfo_rooty()
+#    tkMessageBox.askyesno("Publisher",self.prop["label"])
     if self.discon:
       self.label.config(background='#FF0000')
     else:

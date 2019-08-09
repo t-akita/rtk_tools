@@ -5,49 +5,17 @@ import yaml
 import time
 import sys
 
+import Tkinter as tk
+import ttk
+
 import roslib
 import rospy
 
-import Tkinter as tk
-import ttk
-from rtk_tools.widget import rtkWidget
-from rtk_tools.page import rtkPage
-from rtk_tools.text import rtkText
-from rtk_tools.number import rtkNumber
-from rtk_tools.echo import rtkEcho
-from rtk_tools.pub import rtkPub
-from rtk_tools.title import rtkTitle
-
-def loadwidget(filename):
-  page=rtkPage(root)
-  f=open(filename,'r')
-  for line in f:
-    prop=eval("{"+line+"}")
-    if "class" not in prop: continue
-    if prop["class"]=="Title":
-      if "page" in prop:
-        if prop["page"]=="break":
-          page=rtkPage(root)
-    w=eval("rtk"+prop["class"]+"(page,prop)")
-  f.close()
-
-def cb_pagefwd():
-  if rtkPage.pageNo<len(rtkPage.pages)-1:
-    ctrl.pack_forget()
-    rtkPage.show(1)
-    ctrl.pack(fill='x',anchor='sw',expand=1)
-
-def cb_pagebwd():
-  if rtkPage.pageNo>0:
-    ctrl.pack_forget()
-    rtkPage.show(-1)
-    ctrl.pack(fill='x',anchor='sw',expand=1)
-
-def cb_save():
-   return
+from rtk_tools.ezui import rtkEzui
 
 def cb_close():
-  rtkPage.pageNo=-1
+  global panel
+  panel=None
   return
 
 ################
@@ -68,29 +36,26 @@ Config=parse_argv(sys.argv)
 root=tk.Tk()
 ttk.Style(root).theme_use("clam")
 root.title("panel")
-root.geometry("300x800+0+0")
+root.geometry("300x750-0+0")
 root.protocol("WM_DELETE_WINDOW", cb_close)
+#root.overrideredirect(True)
 
-if "conf" in Config:
-  loadwidget(Config["conf"])
-else:
-  loadwidget("panel.ui")
-
-print "file loaded",time.time()-t0
-
-ctrl=tk.Frame(root,bd=2,background='#444444')
-ctrl.columnconfigure(1,weight=1)
-ctrl.columnconfigure(2,weight=1)
-ctrl.columnconfigure(3,weight=1)
-ttk.Button(ctrl,text="<<<",command=cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
-ttk.Button(ctrl,text=">>>",command=cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
-ttk.Button(ctrl,text="Save",command=cb_save).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
-
-rtkPage.show(0)
-ctrl.pack(fill='x',anchor='sw',expand=1)
+panel=rtkEzui()
+try:
+  panel.same_on(root,Config["conf"])
+#  panel.top_on(root,Config["conf"])
+except:
+  try:
+    panel.on_same(root,"panel.ui")
+  except:
+    print "No config file"
+    sys.exit(404)
 
 print "loop start",time.time()-t0
-while rtkPage.pageNo>=0 and not rospy.is_shutdown():
+while not rospy.is_shutdown():
   root.update()
-  rtkPage.update()
+  try:
+    panel.update()
+  except:
+    sys.exit(0)
 
