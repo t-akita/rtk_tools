@@ -8,19 +8,29 @@ import roslib
 import rospy
 
 class rtkNumber(rtkText):
+  def on_init(self):
+    super(rtkText,self).on_init()
+    self.merge(self.prop,{"format":""})
+
   def __init__(self,page,prop):
     super(rtkNumber,self).__init__(page,prop)
+    self.io.config(justify="right")
 
   def set(self,value):
     if type(value) is str:
       super(rtkNumber,self).set(value)
     else:
       self.io.delete(0,tk.END)
-      self.io.insert(0,str(value))
+      if len(self.prop["format"])>0:
+        fmt="{:"+self.prop["format"]+"}"
+        self.io.insert(0,fmt.format(value))
+      else:
+        self.io.insert(0,str(value))
       param=eval(self.lb+str(value)+self.rb)
       self.merge(self.Param,param)
       self.value=value
       rospy.set_param(self.prop["name"],value)
+
   def on_change(self,event):
     try:
       sval=self.io.get()
@@ -32,6 +42,7 @@ class rtkNumber(rtkText):
       self.io.config(foreground='#000000')
     except:
       super(rtkNumber,self).on_change(event)
+
   def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])

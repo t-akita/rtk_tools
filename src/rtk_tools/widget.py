@@ -5,14 +5,21 @@ import time
 class rtkWidget(object):
   Param={}
   bgcolor='#CCCCCC'
+  def on_init(self):
+    try:
+      n=len(self.prop.keys())
+    except:
+      self.prop={}
   def __init__(self,page,prop):
     page.widgets.append(self)
+    self.on_init()
     try:
       self.merge(self.prop,prop)
     except:
       self.prop=prop
     self.label=ttk.Label(page.frame,text=prop["label"],background=self.bgcolor,anchor="e")
     self.label.grid(row=len(page.widgets),column=1,sticky="nsew")
+    self.label.config(justify="right")
     self.timeout_=0
   def merge(self,DCT,dct):
     for k,v in dct.iteritems():
