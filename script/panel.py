@@ -36,21 +36,24 @@ Config=parse_argv(sys.argv)
 root=tk.Tk()
 ttk.Style(root).theme_use("clam")
 root.title("panel")
-root.geometry("300x750-0+0")
+if "geom" in Config:
+  root.geometry(Config["geom"])
+else:
+  root.geometry("300x750-0+0")
 root.protocol("WM_DELETE_WINDOW", cb_close)
 #root.overrideredirect(True)
 
 panel=rtkEzui()
+panel.cross(panel.prop,Config)
 try:
-  panel.same_on(root,Config["conf"])
-#  panel.top_on(root,Config["conf"])
+  panel.same_on(root)
+#  panel.top_on(root)
 except:
   try:
     panel.on_same(root,"panel.ui")
   except:
     print "No config file"
     sys.exit(404)
-
 print "loop start",time.time()-t0
 while not rospy.is_shutdown():
   root.update()

@@ -7,10 +7,19 @@ class rtkWidget(object):
   bgcolor='#CCCCCC'
   def __init__(self,page,prop):
     page.widgets.append(self)
-    self.prop=prop
+    try:
+      self.merge(self.prop,prop)
+    except:
+      self.prop=prop
     self.label=ttk.Label(page.frame,text=prop["label"],background=self.bgcolor,anchor="e")
     self.label.grid(row=len(page.widgets),column=1,sticky="nsew")
     self.timeout_=0
+  def merge(self,DCT,dct):
+    for k,v in dct.iteritems():
+      if (k in DCT and isinstance(DCT[k], dict) and isinstance(dct[k], dict)):
+        self.merge(DCT[k],dct[k])
+      else:
+        DCT[k]=dct[k]
   def set_timeout(self,t):
     self.timeout_=time.time()+t    
   def on_timeout(self):
