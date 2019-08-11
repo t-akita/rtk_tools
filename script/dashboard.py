@@ -25,12 +25,15 @@ Config={
   "geometry":"900x80-0-30",
   "confirm":"Stop anyway",
   "open_recipe":"Open",
-  "save_as":"Save As"
+  "save_as":"Save As",
+  "font":"System",
+  "fontsize":10,
 }
 Param={
   "recipe":""
 }
-Items=[]
+Launches=[]
+Indicates=[]
 
 ####recipe manager############
 def cb_load(msg):
@@ -63,15 +66,15 @@ def cb_save():
 ####launch manager############
 msgBox=None
 def cb_run(n):
-  global Items,msgBox
+  global Launches,msgBox
   if msgBox is not None:
     msgBox.destroy()
     msgBox=None
-  item=Items[n]
+  item=Launches[n]
   if "process" not in item:
     proc=subprocess.Popen(["roslaunch",item["package"],item["file"]])
-    item["tag"]["background"]="#FFFFFF"
-    item["tag"]["foreground"]="#000000"
+    item["tag"]["foreground"]="#55FFFF"
+    item["tag"]["font"]=(Config["font"],Config["fontsize"],"bold")
     item["button"]["text"]="Stop"
     item["process"]=proc
   elif "shutdown" not in item:
@@ -95,13 +98,38 @@ def cb_run(n):
     set_timeout(functools.partial(cb_stop,n),2)
 
 def cb_stop(n):
-  global Items
-  item=Items[n]
-  item["tag"]["background"]="#888888"
-  item["tag"]["foreground"]="#BB0000"
+  global Launches
+  item=Launches[n]
+  item["tag"]["foreground"]="#000000"
+  item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
   item["button"]["text"]="Start"
   item.pop("process")
   item.pop("shutdown")
+
+####Indicator############
+def cb_bool(n,msg):
+  global Indicates
+  item=Indicates[n]
+  if msg.data:
+    set_timeout(functools.partial(cb_turnon,n),0)
+  else:
+    if "sto" in item: clear_timeout(item["sto"])
+    set_timeout(functools.partial(cb_turnoff,n),0)
+
+def cb_turnon(n):
+  global Indicates
+  item=Indicates[n]
+  item["tag"]["foreground"]="#55FFFF"
+  item["tag"]["font"]=(Config["font"],Config["fontsize"],"bold")
+  if "sto" in item: clear_timeout(item["sto"])
+  item["sto"]=set_timeout(functools.partial(cb_turnoff,n),item["timeout"])
+
+def cb_turnoff(n):
+  global Indicates
+  item=Indicates[n]
+  if "sto" in item: item.pop("sto")
+  item["tag"]["foreground"]="#000000"
+  item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
 
 ####setTimeout
 sto_time=0
@@ -121,6 +149,26 @@ def set_timeout(cb,delay):
   sto_tarray.append(t)
   sto_farray.append(cb)
   sto_reflesh()
+  return t
+def clear_timeout(t):
+  if len(sto_tarray)>0:
+    try:
+      idx=sto_tarray.index(t)
+    except:
+      print "sto id not found",t
+    else:
+      sto_tarray.pop(idx)
+      sto_farray.pop(idx)
+      sto_reflesh()
+def sto_update():
+  global sto_time,sto_index,sto_tarray,sto_farray
+  if sto_time>0:
+    if time.time()>sto_time:
+      cb=sto_farray[sto_index]
+      sto_tarray.pop(sto_index)
+      sto_farray.pop(sto_index)
+      sto_reflesh()
+      cb()
 
 ####Message box
 buffer=[]
@@ -178,39 +226,42 @@ ttk.Style(root).theme_use("clam")
 root.title("Dashboard")
 root.config(background="#00FF00")
 root.config(bd=1)
-#root.geometry(Config["geometry"])
 root.geometry(str(root.winfo_screenwidth())+"x26+0+0")
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
-#frame1=tk.Frame(root,bd=2,relief="ridge",background="#00FF00").pack(anchor='nw',expand=1)
 ttk.Button(root,text="*",width=1,command=cb_log).pack(side='left',anchor='nw',padx=(0,10))
+ttk.Button(root,text=Config["save_as"],command=cb_save).pack(side='right',fill='y',anchor='e')
+ttk.Button(root,text=Config["open_recipe"],command=cb_open_dir).pack(side='right',fill='y',anchor='e')
+wRecipe=tk.Entry(root,width=10)
+wRecipe.pack(side='right',fill='y',anchor='e')
+wRecipe.insert(0,Param["recipe"])
+ttk.Label(root,text="Recipe:",background='#00FF00').pack(side='right',fill='y',anchor='e',padx=(10,0))
+
 for key in Config.keys():
   if key.startswith('launch'):
     item=Config[key]
-    n=len(Items)
-    wlabel=ttk.Label(root,text=item["label"],background='#888888',foreground='#BB0000')
+    n=len(Launches)
+    wlabel=ttk.Label(root,text=item["label"],background='#888888',foreground='#000000')
     wlabel.pack(side='left',fill='y',anchor='w')
     wbtn=ttk.Button(root,text='Start', width=4, command=functools.partial(cb_run,n))
     wbtn.pack(side='left',fill='y',anchor='w',padx=(0,10))
     item["tag"]=wlabel
+    item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
     item["button"]=wbtn
     if "auto" in item:
       set_timeout(functools.partial(cb_run,n),item["auto"])
-    Items.append(item)
-ttk.Button(root,text=Config["save_as"],command=cb_save).pack(side='right',fill='y',anchor='e')
-ttk.Button(root,text=Config["open_recipe"],command=cb_open_dir).pack(side='right',fill='y',anchor='e')
-wRecipe=tk.Entry(root,width=12)
-wRecipe.pack(side='right',fill='y',anchor='e')
-wRecipe.insert(0,Param["recipe"])
+    Launches.append(item)
+  elif key.startswith('indic'):
+    item=Config[key]
+    n=len(Indicates)
+    wlabel=ttk.Label(root,text=item["label"],background='#888888',foreground='#000000')
+    wlabel.pack(side='right',fill='y',anchor='e',padx=(5,5))
+    item["tag"]=wlabel
+    item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
+    rospy.Subscriber(item["topic"],Bool,functools.partial(cb_bool,n))
+    Indicates.append(item)
 
 while not rospy.is_shutdown():
-  if sto_time>0:
-    if time.time()>sto_time:
-      cb=sto_farray[sto_index]
-      sto_tarray.pop(sto_index)
-      sto_farray.pop(sto_index)
-      sto_reflesh()
-      print "timeout callback"
-      cb()
+  sto_update()
   root.update()
