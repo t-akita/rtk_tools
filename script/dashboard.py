@@ -37,6 +37,11 @@ Config={
     "lit": "#FF8800",
     "unlit": "#000000",
     "mask": "#666666"
+  },
+  "icon":{
+    "logo":"logo.png",
+    "start":"start.png",
+    "stop":"stop.png"
   }
 }
 Param={
@@ -250,9 +255,10 @@ root.geometry(str(root.winfo_screenwidth())+"x26+0+0")
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
-starticon=tk.PhotoImage(file=iconpath+"start.png")
-stopicon=tk.PhotoImage(file=iconpath+"stop.png")
-tk.Button(root,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
+logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
+starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
+stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
+tk.Button(root,image=logoicon,bd=0,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
 tk.Label(root,text="Recipe:",font=normalfont,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
 wRecipe=tk.Entry(root,font=normalfont,width=10)
 wRecipe.pack(side='left',fill='y')
@@ -278,7 +284,7 @@ for key in Config.keys():
     item=Config[key]
     n=len(Indicates)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
-    wlabel.pack(side='right',fill='y',anchor='e',padx=(5,5))
+    wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
     item["tag"]=wlabel
     rospy.Subscriber(item["topic"],Bool,functools.partial(cb_bool,n))
     Indicates.append(item)
