@@ -1,5 +1,5 @@
 from .widget import rtkWidget
-import collections
+from . import dictlib
 
 import Tkinter as tk
 import ttk
@@ -12,7 +12,7 @@ class rtkText(rtkWidget):
   def __init__(self,page,prop):
     super(rtkText,self).__init__(page,prop)
     self.parse(prop["name"])
-    self.io=tk.Entry(page.frame,width=16)
+    self.io=tk.Entry(page.frame,width=10)
     self.io.grid(row=len(page.widgets),column=2,sticky="ns")
     self.io.insert(0,'---')
     self.value=''
@@ -32,7 +32,7 @@ class rtkText(rtkWidget):
     self.io.delete(0,tk.END)
     self.io.insert(0,value)
     param=eval(self.lb+"'"+value+"'"+self.rb)
-    self.merge(self.Param,param)
+    dictlib.merge(self.Param,param)
     self.value=value
     rospy.set_param(self.prop["name"],value)
   def on_change(self,event):

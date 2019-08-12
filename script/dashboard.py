@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
 import numpy as np
-import roslib
-import rospy
 import sys
 import os
 import time
@@ -11,23 +9,35 @@ import subprocess
 import functools
 import re
 
+import roslib
+import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 
 import Tkinter as tk
-import ttk
 import tkMessageBox
 import tkFileDialog as filedialog
 from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
 
+from rtk_tools import dictlib
+
 Config={
   "path":"~/",
-  "geometry":"900x80-0-30",
-  "confirm":"Stop anyway",
-  "open_recipe":"Open",
-  "save_as":"Save As",
-  "font":"System",
-  "fontsize":10,
+  "label":{
+    "confirm":"Stop anyway",
+    "open":"Open",
+    "save":"Save As"
+  },
+  "font":{
+    "family":"System",
+    "size":10
+  },
+  "color":{
+    "background": "#00FF00",
+    "lit": "#FF8800",
+    "unlit": "#000000",
+    "mask": "#666666"
+  }
 }
 Param={
   "recipe":""
@@ -71,13 +81,15 @@ def cb_run(n):
     msgBox.destroy()
     msgBox=None
   item=Launches[n]
-  if "process" not in item:
+  if item["state"]==0:
     proc=subprocess.Popen(["roslaunch",item["package"],item["file"]])
-    item["tag"]["foreground"]="#55FFFF"
-    item["tag"]["font"]=(Config["font"],Config["fontsize"],"bold")
-    item["button"]["text"]="Stop"
+    item["tag"]["foreground"]=litcolor
+    item["tag"]["font"]=boldfont
+    item["button"]["image"]=stopicon
     item["process"]=proc
-  elif "shutdown" not in item:
+    item["state"]=1
+    set_timeout(functools.partial(cb_runstat,(n,2)),3)
+  elif item["state"]==2:
     if "confirm" in item:
       if item["confirm"]:
         w=item["tag"]
@@ -85,7 +97,7 @@ def cb_run(n):
         msgBox.title("Confirm")
         msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
         try:
-          f=tkMessageBox.askyesno("Confirm",Config["confirm"],parent=msgBox)
+          f=tkMessageBox.askyesno("Confirm",Config["label"]["confirm"],parent=msgBox)
         except:
           print "Message box exception"
           f=False
@@ -94,17 +106,21 @@ def cb_run(n):
         msgBox=None
         if f is False: return
     item["process"].terminate()
-    item["shutdown"]=True
-    set_timeout(functools.partial(cb_stop,n),2)
+    item["state"]=3
+    set_timeout(functools.partial(cb_stop,n),1)
+
+def cb_runstat(tpl):
+  global Launches
+  item=Launches[tpl[0]]
+  item["state"]=tpl[1]
 
 def cb_stop(n):
   global Launches
   item=Launches[n]
-  item["tag"]["foreground"]="#000000"
-  item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
-  item["button"]["text"]="Start"
-  item.pop("process")
-  item.pop("shutdown")
+  item["tag"]["foreground"]=unlitcolor
+  item["tag"]["font"]=normalfont
+  item["button"]["image"]=starticon
+  item["state"]=0
 
 ####Indicator############
 def cb_bool(n,msg):
@@ -119,8 +135,8 @@ def cb_bool(n,msg):
 def cb_turnon(n):
   global Indicates
   item=Indicates[n]
-  item["tag"]["foreground"]="#55FFFF"
-  item["tag"]["font"]=(Config["font"],Config["fontsize"],"bold")
+  item["tag"]["foreground"]=litcolor
+  item["tag"]["font"]=boldfont
   if "sto" in item: clear_timeout(item["sto"])
   item["sto"]=set_timeout(functools.partial(cb_turnoff,n),item["timeout"])
 
@@ -128,8 +144,8 @@ def cb_turnoff(n):
   global Indicates
   item=Indicates[n]
   if "sto" in item: item.pop("sto")
-  item["tag"]["foreground"]="#000000"
-  item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
+  item["tag"]["foreground"]=unlitcolor
+  item["tag"]["font"]=normalfont
 
 ####setTimeout
 sto_time=0
@@ -195,15 +211,11 @@ def parse_argv(argv):
   return args
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
-Config.update(parse_argv(sys.argv))
 try:
-  Config.update(rospy.get_param("/config/dashboard"))
+  dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
   print "get_param exception:",e.args
-#try:
-#  Param.update(rospy.get_param("/dashboard"))
-#except Exception as e:
-#  print "get_param exception:",e.args
+dictlib.merge(Config,parse_argv(sys.argv))
 
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
@@ -221,44 +233,53 @@ if "path" in Config:
   commands.getoutput("rosparam load "+Config["path"]+"/recipe/param.yaml")
 
 ####Layout####
+normalfont=(Config["font"]["family"],Config["font"]["size"],"normal")
+boldfont=(Config["font"]["family"],Config["font"]["size"],"bold")
+bgcolor=Config["color"]["background"]
+litcolor=Config["color"]["lit"]
+unlitcolor=Config["color"]["unlit"]
+maskcolor=Config["color"]["mask"]
+iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+
 root=tk.Tk()
-ttk.Style(root).theme_use("clam")
+#ttk.Style(root).theme_use("clam")
 root.title("Dashboard")
-root.config(background="#00FF00")
+root.config(background=bgcolor)
 root.config(bd=1)
 root.geometry(str(root.winfo_screenwidth())+"x26+0+0")
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
-ttk.Button(root,text="*",width=1,command=cb_log).pack(side='left',anchor='nw',padx=(0,10))
-ttk.Button(root,text=Config["save_as"],command=cb_save).pack(side='right',fill='y',anchor='e')
-ttk.Button(root,text=Config["open_recipe"],command=cb_open_dir).pack(side='right',fill='y',anchor='e')
-wRecipe=tk.Entry(root,width=10)
-wRecipe.pack(side='right',fill='y',anchor='e')
+starticon=tk.PhotoImage(file=iconpath+"start.png")
+stopicon=tk.PhotoImage(file=iconpath+"stop.png")
+tk.Button(root,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
+tk.Label(root,text="Recipe:",font=normalfont,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
+wRecipe=tk.Entry(root,font=normalfont,width=10)
+wRecipe.pack(side='left',fill='y')
 wRecipe.insert(0,Param["recipe"])
-ttk.Label(root,text="Recipe:",background='#00FF00').pack(side='right',fill='y',anchor='e',padx=(10,0))
+tk.Button(root,text=Config["label"]["open"],command=cb_open_dir).pack(side='left',fill='y')
+tk.Button(root,text=Config["label"]["save"],width=8,command=cb_save).pack(side='left',fill='y',padx=(0,20))
 
 for key in Config.keys():
   if key.startswith('launch'):
     item=Config[key]
     n=len(Launches)
-    wlabel=ttk.Label(root,text=item["label"],background='#888888',foreground='#000000')
+    wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
-    wbtn=ttk.Button(root,text='Start', width=4, command=functools.partial(cb_run,n))
+    wbtn=tk.Button(root,image=starticon,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
     wbtn.pack(side='left',fill='y',anchor='w',padx=(0,10))
     item["tag"]=wlabel
-    item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
     item["button"]=wbtn
+    item["state"]=0
     if "auto" in item:
       set_timeout(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
   elif key.startswith('indic'):
     item=Config[key]
     n=len(Indicates)
-    wlabel=ttk.Label(root,text=item["label"],background='#888888',foreground='#000000')
+    wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='right',fill='y',anchor='e',padx=(5,5))
     item["tag"]=wlabel
-    item["tag"]["font"]=(Config["font"],Config["fontsize"],"normal")
     rospy.Subscriber(item["topic"],Bool,functools.partial(cb_bool,n))
     Indicates.append(item)
 

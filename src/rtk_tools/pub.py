@@ -1,4 +1,5 @@
 from .topic import rtkTopic
+from . import dictlib
 
 import Tkinter as tk
 import tkMessageBox
@@ -10,7 +11,7 @@ from std_msgs.msg import Bool
 class rtkPub(rtkTopic):
   def on_init(self):
     super(rtkPub,self).on_init()
-    self.merge(self.prop,{"confirm":"","button":"Do"})
+    dictlib.merge(self.prop,{"confirm":"","button":"Do"})
 
   def __init__(self,page,prop):
     super(rtkPub,self).__init__(page,prop)

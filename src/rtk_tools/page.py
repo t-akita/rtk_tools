@@ -10,7 +10,7 @@ class rtkPage(object):
   def __init__(self,root):
     self.pages.append(self)
     self.widgets=[]
-    self.frame=tk.Frame(root,bd=2,background='#AAAAAA')
+    self.frame=tk.Frame(root,bd=2,background=root["background"])
     self.frame.columnconfigure(1,weight=1)
   @staticmethod
   def update():
