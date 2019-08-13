@@ -12,6 +12,25 @@ import roslib
 import rospy
 
 from rtk_tools.ezui import rtkEzui
+from rtk_tools import dictlib
+
+Config={
+  "geom":"300x750-0+0",
+  "dump":"",
+  "conf":"panel.ui",
+  "lift":True,
+  "label":{
+    "button":"Save",
+    "confirm":"Overwrite yaml"
+  },
+  "font":{
+    "family":"System",
+    "size":10
+  },
+  "color":{
+    "background": "#00FF00"
+  }
+}
 
 def cb_close():
   global panel
@@ -31,14 +50,19 @@ def parse_argv(argv):
 ####ROS Init####
 t0=time.time()
 rospy.init_node("rtk_panel",anonymous=True)
-Config=parse_argv(sys.argv)
+try:
+  dictlib.merge(Config,rospy.get_param("/config/panel"))
+except Exception as e:
+  print "get_param exception:",e.args
+
+dictlib.merge(Config,parse_argv(sys.argv))
 
 ####Layout####
 root=tk.Tk()
 ttk.Style(root).theme_use("clam")
 root.title("panel")
 root.protocol("WM_DELETE_WINDOW", cb_close)
-#root.overrideredirect(True)
+root.config(background=Config["color"]["background"])
 
 panel=rtkEzui(Config)
 try:

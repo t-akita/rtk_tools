@@ -1,5 +1,5 @@
 from .text import rtkText
-import collections
+from . import dictlib
 
 import Tkinter as tk
 import ttk
@@ -10,7 +10,7 @@ import rospy
 class rtkNumber(rtkText):
   def on_init(self):
     super(rtkText,self).on_init()
-    self.merge(self.prop,{"format":""})
+    dictlib.merge(self.prop,{"format":""})
 
   def __init__(self,page,prop):
     super(rtkNumber,self).__init__(page,prop)
@@ -27,7 +27,7 @@ class rtkNumber(rtkText):
       else:
         self.io.insert(0,str(value))
       param=eval(self.lb+str(value)+self.rb)
-      self.merge(self.Param,param)
+      dictlib.merge(self.Param,param)
       self.value=value
       rospy.set_param(self.prop["name"],value)
 
