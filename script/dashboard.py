@@ -23,11 +23,7 @@ from rtk_tools import dictlib
 
 Config={
   "path":"~/",
-  "label":{
-    "confirm":"Stop anyway",
-    "open":"Open",
-    "save":"Save As"
-  },
+  "confirm":"Stop anyway",
   "font":{
     "family":"System",
     "size":10
@@ -104,9 +100,15 @@ def cb_run(n):
         msgBox=tk.Tk()
         msgBox.title("Confirm")
         msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
+        msg=Config["confirm"]
+        if "message" in Config:
+          if "halt" in Config["message"]: msg=Config["message"]["halt"]
+          elif "launch" in Config["message"]: msg=Config["message"]["launch"]
+        elif "label" in Config:
+          if "confirm" in Config["label"]: msg=Config["label"]["confirm"]
         try:
-          f=tkMessageBox.askyesno("Confirm",Config["label"]["confirm"],parent=msgBox)
-        except:
+          f=tkMessageBox.askyesno("Confirm",msg,parent=msgBox)
+        except:  #message box is forced closed
           print "Message box exception"
           f=False
         if msgBox is None: return
