@@ -259,7 +259,7 @@ logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
 recipeicon=tk.PhotoImage(file=iconpath+Config["icon"]["recipe"])
 starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
 stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
-tk.Button(root,image=logoicon,bd=0,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
+tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
 tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
 wRecipe=tk.Entry(root,font=normalfont,width=10)
 wRecipe.pack(side='left',fill='y')
@@ -273,7 +273,7 @@ for key in Config.keys():
     n=len(Launches)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
-    wbtn=tk.Button(root,image=starticon,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
+    wbtn=tk.Button(root,image=starticon,background=bgcolor,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
     wbtn.pack(side='left',fill='y',anchor='w',padx=(0,10))
     item["tag"]=wlabel
     item["button"]=wbtn
