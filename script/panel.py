@@ -23,12 +23,15 @@ Config={
     "button":"Save",
     "confirm":"Overwrite yaml"
   },
+  "width":(0,10),
   "font":{
     "family":"System",
     "size":10
   },
   "color":{
-    "background": "#00FF00"
+    "background": "#00FF00",
+    "title": ("#FFFFFF","#555555"),
+    "label": ("#000000","#CCCCCC")
   }
 }
 
@@ -51,7 +54,17 @@ def parse_argv(argv):
 t0=time.time()
 rospy.init_node("rtk_panel",anonymous=True)
 try:
-  dictlib.merge(Config,rospy.get_param("/config/panel"))
+  conf=rospy.get_param("/config/panel")
+except:
+  conf={}
+else:
+  cset=["label","title"]
+  for k in cset:
+    if k in conf["color"]:
+      conf["color"][k]=eval(conf["color"][k])
+      print "color tuple",k,conf["color"][k]
+try:
+  dictlib.merge(Config,conf)
 except Exception as e:
   print "get_param exception:",e.args
 
@@ -76,6 +89,7 @@ while not rospy.is_shutdown():
   root.update()
   try:
     panel.update()
-  except:
+  except Exception as e:
+    print "panel update exception",e.args
     sys.exit(0)
 

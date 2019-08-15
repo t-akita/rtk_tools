@@ -12,12 +12,15 @@ class rtkText(rtkWidget):
   def __init__(self,page,prop):
     super(rtkText,self).__init__(page,prop)
     self.parse(prop["name"])
-    self.io=tk.Entry(page.frame,width=10)
-    self.io.grid(row=len(page.widgets),column=2,sticky="ns")
+    self.io=tk.Entry(page.frame,
+      font=self.label["font"],
+      width=self.Config["width"][1])
+    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
     self.io.insert(0,'---')
     self.value=''
     self.io.bind('<Key-Return>',self.on_change)
-    self.io.bind('<Key>',self.on_key)
+    self.io.bind('<KeyPress>',self.on_key)
+    self.io.bind('<FocusOut>',self.on_abort)
     self.set_timeout(1)
 
   def parse(self,str):
@@ -40,6 +43,9 @@ class rtkText(rtkWidget):
     self.io.config(foreground='#000000')
   def on_key(self,event):
     self.io.config(foreground='#FF0000')    
+  def on_abort(self,event):
+    self.io.config(foreground='#000000')
+    self.set(self.value)
   def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])
