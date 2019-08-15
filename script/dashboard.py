@@ -42,7 +42,9 @@ Config={
     "logo":"logo.png",
     "recipe":"pan.png",
     "start":"start.png",
-    "stop":"stop.png"
+    "stop":"stop.png",
+    "open":"open.png",
+    "copy":"copy.png"
   }
 }
 Param={
@@ -259,13 +261,15 @@ logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
 recipeicon=tk.PhotoImage(file=iconpath+Config["icon"]["recipe"])
 starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
 stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
+openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
+copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
 tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
 tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
 wRecipe=tk.Entry(root,font=normalfont,width=10)
 wRecipe.pack(side='left',fill='y')
 wRecipe.insert(0,Param["recipe"])
-tk.Button(root,text=Config["label"]["open"],command=cb_open_dir).pack(side='left',fill='y')
-tk.Button(root,text=Config["label"]["save"],width=8,command=cb_save).pack(side='left',fill='y',padx=(0,20))
+tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
+tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save).pack(side='left',fill='y',padx=(0,30))
 
 for key in Config.keys():
   if key.startswith('launch'):
