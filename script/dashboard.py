@@ -40,6 +40,7 @@ Config={
   },
   "icon":{
     "logo":"logo.png",
+    "recipe":"pan.png",
     "start":"start.png",
     "stop":"stop.png"
   }
@@ -247,7 +248,6 @@ maskcolor=Config["color"]["mask"]
 iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
 
 root=tk.Tk()
-#ttk.Style(root).theme_use("clam")
 root.title("Dashboard")
 root.config(background=bgcolor)
 root.config(bd=1)
@@ -256,10 +256,11 @@ root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
 logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
+recipeicon=tk.PhotoImage(file=iconpath+Config["icon"]["recipe"])
 starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
 stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
 tk.Button(root,image=logoicon,bd=0,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
-tk.Label(root,text="Recipe:",font=normalfont,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
+tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
 wRecipe=tk.Entry(root,font=normalfont,width=10)
 wRecipe.pack(side='left',fill='y')
 wRecipe.insert(0,Param["recipe"])

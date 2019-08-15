@@ -15,8 +15,8 @@ class rtkPub(rtkTopic):
 
   def __init__(self,page,prop):
     super(rtkPub,self).__init__(page,prop)
-    self.io=tk.Button(page.frame,text=self.prop["button"],command=self.cb_pub)
-    self.io.grid(row=len(page.widgets),column=2,sticky="nsw")
+    self.io=tk.Button(page.frame,text=self.prop["button"],font=self.label["font"],command=self.cb_pub)
+    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
 
   def cb_pub(self):
     x=self.io.winfo_rootx()
@@ -40,5 +40,5 @@ class rtkPub(rtkTopic):
 
   def on_timeout(self):
     if self.discon: super(rtkPub,self).on_timeout()
-    self.label.config(background=self.bgcolor)
+    self.label.config(background=self.Config["color"]["label"][1])
 
