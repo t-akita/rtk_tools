@@ -5,7 +5,18 @@ from . import dictlib
 
 class rtkWidget(object):
   Param={}
-  bgcolor='#CCCCCC'
+  Config={
+    "width":(0,10),
+    "font":{
+      "family":"System",
+      "size":10
+    },
+    "color":{
+      "background": "#00FF00",
+      "title": ("#FFFFFF","#555555"),
+      "label": ("#000000","#CCCCCC")
+    }
+  }
   def on_init(self):
     try:
       n=len(self.prop.keys())
@@ -18,7 +29,12 @@ class rtkWidget(object):
       dictlib.merge(self.prop,prop)
     except:
       self.prop=prop
-    self.label=ttk.Label(page.frame,text=prop["label"],background=self.bgcolor,anchor="e")
+    self.label=ttk.Label(page.frame,
+      text=self.prop["label"],
+      font=(self.Config["font"]["family"],self.Config["font"]["size"]),
+      foreground=self.Config["color"]["label"][0],
+      background=self.Config["color"]["label"][1],
+      anchor="e")
     self.label.grid(row=len(page.widgets),column=1,sticky="nsew")
     self.label.config(justify="right")
     self.timeout_=0

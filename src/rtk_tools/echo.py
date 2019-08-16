@@ -7,7 +7,6 @@ import roslib
 import rospy
 
 class rtkEcho(rtkTopic):
-  width=16
   def cb_sub(self,msg):
     sa=str(msg).split("\n")
     sd=""
@@ -17,7 +16,7 @@ class rtkEcho(rtkTopic):
       if n<0: continue
       s=s[n+2:]
       if len(s)==0: continue
-      sd=sd+" "*(self.width-len(s))+s
+      sd=sd+s
       h=h+1
       if h<self.height: sd=sd+"\n"
       else: break
@@ -26,8 +25,12 @@ class rtkEcho(rtkTopic):
   def __init__(self,page,prop):
     super(rtkEcho,self).__init__(page,prop)
     self.height=1+prop["label"].count("\n")
-    self.io=tk.Text(page.frame,width=self.width,height=self.height)
-    self.io.grid(row=len(page.widgets),column=2,sticky="nsw")
+    self.io=tk.Text(page.frame,
+      font=self.label["font"],
+      width=self.Config["width"][1],
+      height=self.height)
+    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
+    self.io.tag_configure("tag-right",justify="right")
     self.disp=""
   def on_connect(self,topic_type):
     rospy.Subscriber(self.prop["name"],topic_type,self.cb_sub)
@@ -37,7 +40,7 @@ class rtkEcho(rtkTopic):
       self.io.config(state='normal')
       self.io.config(foreground='#000000')
       self.io.delete("0.0","end")
-      self.io.insert("0.0",self.disp)
+      self.io.insert("0.0",self.disp,"tag-right")
       self.io.config(state='disabled')
       self.disp=""
       self.set_timeout(5)

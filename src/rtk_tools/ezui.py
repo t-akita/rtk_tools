@@ -1,5 +1,6 @@
 import yaml
 import time
+import copy
 
 import Tkinter as tk
 import ttk
@@ -33,11 +34,18 @@ class rtkEzui(object):
         "size":10
       },
       "color":{
-        "background": "#AAAAAA",
+        "background": "#AAAAAA"
       }
     }
     dictlib.merge(self.prop,conf)
     if type(self.prop["lift"]) is str: self.prop["lift"]=eval(self.prop["lift"])
+    cf=copy.copy(conf)
+    cf.pop("geom")
+    cf.pop("dump")
+    cf.pop("conf")
+    cf.pop("lift")
+    dictlib.merge(rtkPage.Config,cf)
+    dictlib.merge(rtkWidget.Config,cf)
     return
   def top_on(self,root):
     pane=tk.Toplevel(root)
@@ -61,7 +69,7 @@ class rtkEzui(object):
           if prop["page"]=="break":
             page=rtkPage(self.pane)
       try:
-        print "Parsing class",n,prop["class"]
+        print "Parsing class",n,prop
         w=eval("rtk"+prop["class"]+"(page,prop)")
       except:
         continue
