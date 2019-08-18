@@ -24,6 +24,7 @@ from rtk_tools import dictlib
 Config={
   "path":"~/",
   "confirm":"Stop anyway",
+  "autoclose":10,
   "font":{
     "family":"System",
     "size":10
@@ -49,6 +50,13 @@ Param={
 Launches=[]
 Indicates=[]
 
+####dialog box control########
+msgBox=None
+msgBoxWait=None
+def cb_autoclose():
+  global msgBox,msgBoxWait
+  if msgBoxWait is not None: msgBox.destroy()
+  msgBoxWait=None
 ####recipe manager############
 def cb_load(msg):
   Param["recipe"]=msg.data
@@ -65,7 +73,16 @@ def cb_load(msg):
     pub_msg.publish("recipe_manager::cb_load failed "+Param["recipe"])
 
 def cb_open_dir():
-  ret=askopendirname(parent=root,initialdir=Config["path"]+"/recipe.d",initialfile="")
+  global msgBox,msgBoxWait
+  if msgBoxWait is not None: return
+  msgBox=tk.Tk()
+  msgBox.title("Open dir")
+  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
+  ret=askopendirname(parent=msgBox,initialdir=Config["path"]+"/recipe.d",initialfile="")
+  if msgBoxWait is None: return
+  msgBox.after_cancel(msgBoxWait)
+  msgBoxWait=None
+  msgBox.destroy()
   dir=re.sub(r".*/recipe.d","",ret)
   if dir != "":
     msg=String()
@@ -73,17 +90,16 @@ def cb_open_dir():
     cb_load(msg)
 
 def cb_save():
+  global msgBox
+  if msgBox is not None: return
   ret=asksaveasfilename(parent=root,defaultext="",initialdir=Config["path"]+"/recipe.d",initialfile="",filetypes=[("Directory", "*/")])
   if ret != "":
     print "save",ret
 
 ####launch manager############
-msgBox=None
 def cb_run(n):
-  global Launches,msgBox
-  if msgBox is not None:
-    msgBox.destroy()
-    msgBox=None
+  global Launches,msgBox,msgBoxWait
+  if msgBoxWait is not None: return
   item=Launches[n]
   if item["state"]==0:
     proc=subprocess.Popen(["roslaunch",item["package"],item["file"]])
@@ -100,20 +116,18 @@ def cb_run(n):
         msgBox=tk.Tk()
         msgBox.title("Confirm")
         msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
+        msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
         msg=Config["confirm"]
         if "message" in Config:
           if "halt" in Config["message"]: msg=Config["message"]["halt"]
           elif "launch" in Config["message"]: msg=Config["message"]["launch"]
         elif "label" in Config:
           if "confirm" in Config["label"]: msg=Config["label"]["confirm"]
-        try:
-          f=tkMessageBox.askyesno("Confirm",msg,parent=msgBox)
-        except:  #message box is forced closed
-          print "Message box exception"
-          f=False
-        if msgBox is None: return
+        f=tkMessageBox.askyesno("Confirm",msg,parent=msgBox)
+        if msgBoxWait is None: return
+        msgBox.after_cancel(msgBoxWait)
+        msgBoxWait=None
         msgBox.destroy()
-        msgBox=None
         if f is False: return
     item["process"].terminate()
     item["state"]=3
