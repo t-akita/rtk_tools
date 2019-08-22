@@ -25,6 +25,7 @@ Config={
   "path":"~/",
   "confirm":"Stop anyway",
   "autoclose":10,
+  "altitude":"+0",
   "font":{
     "family":"System",
     "size":10
@@ -102,7 +103,12 @@ def cb_run(n):
   if msgBoxWait is not None: return
   item=Launches[n]
   if item["state"]==0:
-    proc=subprocess.Popen(["roslaunch",item["package"],item["file"]])
+    cmd=["roslaunch",item["package"],item["file"]];
+    if "args" in item:
+      for k in item["args"]:
+        cmd.append(k+":="+item["args"][k])
+    print "dash",cmd
+    proc=subprocess.Popen(cmd)
     item["tag"]["foreground"]=litcolor
     item["tag"]["font"]=boldfont
     item["button"]["image"]=stopicon
@@ -269,7 +275,7 @@ root=tk.Tk()
 root.title("Dashboard")
 root.config(background=bgcolor)
 root.config(bd=1)
-root.geometry(str(root.winfo_screenwidth())+"x26+0+0")
+root.geometry(str(root.winfo_screenwidth())+"x26+0"+Config["altitude"])
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
