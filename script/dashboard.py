@@ -23,7 +23,7 @@ from rtk_tools import dictlib
 
 Config={
   "packpath":"~/",
-  "load":"",
+  "file":"",
   "confirm":"Stop anyway",
   "autoclose":10,
   "altitude":"+0",
@@ -238,7 +238,7 @@ try:
 except Exception as e:
   print "get_param exception:",e.args
 packpath=commands.getoutput("rospack find "+Config["package"])
-commands.getoutput("rosparam load "+packpath+"/dashboard.d/"+Config["load"])
+commands.getoutput("rosparam load "+packpath+"/dashboard.d/"+Config["file"])
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -293,6 +293,7 @@ tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,comma
 for key in Config.keys():
   if key.startswith('launch'):
     item=Config[key]
+    if "file" not in item: continue
     n=len(Launches)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
@@ -302,7 +303,8 @@ for key in Config.keys():
     item["button"]=wbtn
     item["state"]=0
     if "auto" in item:
-      set_timeout(functools.partial(cb_run,n),item["auto"])
+      if item["auto"]>=0:
+        set_timeout(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
   elif key.startswith('indic'):
     item=Config[key]
