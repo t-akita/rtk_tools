@@ -22,8 +22,10 @@ from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
 from rtk_tools import dictlib
 
 Config={
-  "packpath":"~/",
-  "file":"",
+  "recipe":{
+    "link": "recipe",
+    "dir": "recipe.d"
+  },
   "confirm":"Stop anyway",
   "autoclose":10,
   "altitude":"+0",
@@ -64,10 +66,10 @@ def cb_load(msg):
   Param["recipe"]=msg.data
   wRecipe.delete(0,tk.END)
   wRecipe.insert(0,Param["recipe"])
-  if os.system("ls "+packpath+"/recipe.d/"+Param["recipe"])==0:
+  if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
     rospy.set_param("/dashboard",Param)
-    commands.getoutput("cd "+packpath+"; rm recipe; ln -s recipe.d/"+Param["recipe"]+" recipe")
-    commands.getoutput("rosparam load "+packpath+"/recipe/param.yaml")
+    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    commands.getoutput("rosparam load "+linkpath+"/param.yaml")
     res=Bool(); res.data=True; pub_Y3.publish(res)
     pub_msg.publish("recipe_manager::cb_load "+Param["recipe"])
   else:
@@ -80,7 +82,7 @@ def cb_open_dir():
   msgBox=tk.Tk()
   msgBox.title("Open dir")
   msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
-  ret=askopendirname(parent=msgBox,initialdir=packpath+"/recipe.d",initialfile="")
+  ret=askopendirname(parent=msgBox,initialdir=dirpath,initialfile="")
   if msgBoxWait is None: return
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
@@ -94,7 +96,7 @@ def cb_open_dir():
 def cb_save():
   global msgBox
   if msgBox is not None: return
-  ret=asksaveasfilename(parent=root,defaultext="",initialdir=packpath+"/recipe.d",initialfile="",filetypes=[("Directory", "*/")])
+  ret=asksaveasfilename(parent=root,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
   if ret != "":
     print "save",ret
 
@@ -107,7 +109,7 @@ def cb_run(n):
     cmd=["roslaunch",item["package"],item["file"]];
     if "args" in item:
       for k in item["args"]:
-        cmd.append(k+":="+item["args"][k])
+        cmd.append(k+":="+str(item["args"][k]))
     print "dash",cmd
     proc=subprocess.Popen(cmd)
     item["tag"]["foreground"]=litcolor
@@ -237,8 +239,10 @@ try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
   print "get_param exception:",e.args
-packpath=commands.getoutput("rospack find "+Config["package"])
-commands.getoutput("rosparam load "+packpath+"/dashboard.d/"+Config["file"])
+thispath=commands.getoutput("rospack find rtk_tools")
+commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
+linkpath=thispath+"/../"+Config["recipe"]["link"]
+dirpath=thispath+"/../"+Config["recipe"]["dir"]
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -247,17 +251,18 @@ except Exception as e:
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
 rospy.Subscriber("/message",String,cb_sub)
+rospy.Subscriber("/error",String,cb_sub)
 pub_Y3=rospy.Publisher("~loaded",Bool,queue_size=1)
 pub_E3=rospy.Publisher("~failed",Bool,queue_size=1)
 pub_msg=rospy.Publisher("/message",String,queue_size=1)
 
 ####reflect file link to parameter server
-ln=commands.getoutput("ls -l "+packpath+"/recipe")
+ln=commands.getoutput("ls -l "+linkpath)
 if "->" in ln:
   dst=re.sub(r".*->","",ln)
   Param["recipe"]=re.sub(r".*/","",dst)
   rospy.set_param("/dashboard",Param)
-commands.getoutput("rosparam load "+packpath+"/recipe/param.yaml")
+commands.getoutput("rosparam load "+linkpath+"/param.yaml")
 
 ####Layout####
 normalfont=(Config["font"]["family"],Config["font"]["size"],"normal")
@@ -266,7 +271,7 @@ bgcolor=Config["color"]["background"]
 litcolor=Config["color"]["lit"]
 unlitcolor=Config["color"]["unlit"]
 maskcolor=Config["color"]["mask"]
-iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+iconpath=thispath+"/icon/"
 
 root=tk.Tk()
 root.title("Dashboard")
