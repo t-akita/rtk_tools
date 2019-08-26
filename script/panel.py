@@ -19,9 +19,8 @@ Config={
   "dump":"",
   "conf":"panel.ui",
   "lift":True,
-  "label":{
-    "button":"Save",
-    "confirm":"Overwrite yaml"
+  "message":{
+    "save":"Overwrite"
   },
   "width":(0,10),
   "font":{
@@ -81,8 +80,8 @@ panel=rtkEzui(Config)
 try:
   panel.same_on(root)
 #  panel.top_on(root)
-except:
-  print "No config file"
+except Exception as e:
+  print "panel open error",e.args
   sys.exit(404)
 print "loop start",time.time()-t0
 while not rospy.is_shutdown():

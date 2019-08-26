@@ -1,6 +1,8 @@
 import yaml
 import time
 import copy
+import commands
+import functools
 
 import Tkinter as tk
 import ttk
@@ -9,6 +11,7 @@ import tkMessageBox
 import rospy
 import roslib
 
+from . import dictlib
 from .widget import rtkWidget
 from .page import rtkPage
 from .text import rtkText
@@ -19,15 +22,17 @@ from .title import rtkTitle
 from . import dictlib
 
 class rtkEzui(object):
+  larricon=None
+  rarricon=None
+  saveicon=None
   def __init__(self,conf):
     self.prop={
       "geom":"300x750-0+0",
       "dump":"",
       "conf":"panel.ui",
       "lift":True,
-      "label":{
-        "button":"Save",
-        "confirm":"Overwrite yaml",
+      "message":{
+        "save":"Overwrite yaml",
       },
       "font":{
         "family":"System",
@@ -35,6 +40,16 @@ class rtkEzui(object):
       },
       "color":{
         "background": "#AAAAAA"
+      },
+      "icon":{
+        "larr":"go-previous.png",
+        "rarr":"go-next.png",
+        "save":"save.png"
+      },
+      "Pub":{
+        "icon":"run.png",
+        "confirm":False,
+        "message":""
       }
     }
     dictlib.merge(self.prop,conf)
@@ -58,8 +73,8 @@ class rtkEzui(object):
     f=open(self.prop["conf"],'r')
     lines=f.readlines()
     for n,line in enumerate(lines):
+      print "ezui::parsing line ",n
       try:
-        print "Parsing conf file",n,line
         prop=eval("{"+line+"}")
       except:
         continue
@@ -68,9 +83,12 @@ class rtkEzui(object):
         if "page" in prop:
           if prop["page"]=="break":
             page=rtkPage(self.pane)
+      pdef={}
+      if prop["class"] in self.prop:
+        pdef=copy.copy(self.prop[prop["class"]])
+      dictlib.merge(pdef,prop)
       try:
-        print "Parsing class",n,prop
-        w=eval("rtk"+prop["class"]+"(page,prop)")
+        w=eval("rtk"+prop["class"]+"(page,pdef)")
       except:
         continue
     f.close()
@@ -78,9 +96,16 @@ class rtkEzui(object):
     self.ctrl.columnconfigure(1,weight=1)
     self.ctrl.columnconfigure(2,weight=1)
     self.ctrl.columnconfigure(3,weight=1)
-    ttk.Button(self.ctrl,text="<<<",command=self.cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
-    ttk.Button(self.ctrl,text=">>>",command=self.cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
-    ttk.Button(self.ctrl,text=self.prop["label"]["button"],command=lambda: self.cb_save(self.prop["dump"])).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
+    iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+    if self.larricon is None:
+      self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
+    if self.rarricon is None:
+      self.rarricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["rarr"])
+    if self.saveicon is None:
+      self.saveicon=tk.PhotoImage(file=iconpath+self.prop["icon"]["save"])
+    tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.saveicon,command=functools.partial(self.cb_save,self.prop["dump"])).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
@@ -97,7 +122,7 @@ class rtkEzui(object):
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_save(self,filename):
-    f=tkMessageBox.askyesno("Confirm",self.prop["label"]["confirm"])
+    f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"])
     if f is False: return
     try:
       yf=open(filename, "r")

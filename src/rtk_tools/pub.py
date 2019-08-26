@@ -1,29 +1,37 @@
 from .topic import rtkTopic
 from . import dictlib
+import commands
 
 import Tkinter as tk
 import tkMessageBox
-import ttk
 import roslib
 import rospy
 from std_msgs.msg import Bool
 
 class rtkPub(rtkTopic):
+  buttonicon=None
   def on_init(self):
     super(rtkPub,self).on_init()
-    dictlib.merge(self.prop,{"confirm":"","button":"Do"})
-
+    dictlib.merge(self.prop,{"message":"","confirm":False,"icon":"run.png"})
   def __init__(self,page,prop):
     super(rtkPub,self).__init__(page,prop)
-    self.io=tk.Button(page.frame,text=self.prop["button"],font=self.label["font"],command=self.cb_pub)
+    iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+    if self.buttonicon is None:
+      self.buttonicon=tk.PhotoImage(file=iconpath+self.prop["icon"])
+    self.io=tk.Button(page.frame,image=self.buttonicon,command=self.cb_pub)
     self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
 
   def cb_pub(self):
     x=self.io.winfo_rootx()
     y=self.io.winfo_rooty()
+    msg=""
+    if type(self.prop["confirm"]) is str:
+      msg=self.prop["confirm"]
+    elif self.prop["confirm"]:
+      msg=self.prop["message"]
+      if msg=="": msg=self.prop["label"]
     f=True
-    if len(self.prop["confirm"])>0:
-      f=tkMessageBox.askyesno("Confirm",self.prop["confirm"])
+    if msg!="": f=tkMessageBox.askyesno("Confirm",msg)
     if f is False: return
     if self.discon:
       self.label.config(background='#FF0000')
