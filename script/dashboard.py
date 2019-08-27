@@ -182,18 +182,16 @@ def cb_turnoff(n):
 
 ####setTimeout
 sto_time=0
-sto_index=0
 sto_tarray=[]
 sto_farray=[]
 def sto_reflesh():
-  global sto_time,sto_index,sto_tarray,sto_farray
+  global sto_time,sto_tarray,sto_farray
   if len(sto_tarray)>0:
     sto_time=min(sto_tarray)
-    sto_index=sto_tarray.index(sto_time)
   else:
     sto_time=0
 def set_timeout(cb,delay):
-  global sto_time,sto_index,sto_tarray,sto_farray
+  global sto_time,sto_tarray,sto_farray
   t=time.time()+delay
   sto_tarray.append(t)
   sto_farray.append(cb)
@@ -204,20 +202,25 @@ def clear_timeout(t):
     try:
       idx=sto_tarray.index(t)
     except:
-      print "sto id not found",t
+      print "sto::clear id not found",t
     else:
       sto_tarray.pop(idx)
       sto_farray.pop(idx)
       sto_reflesh()
 def sto_update():
-  global sto_time,sto_index,sto_tarray,sto_farray
+  global sto_time,sto_tarray,sto_farray
   if sto_time>0:
     if time.time()>sto_time:
-      cb=sto_farray[sto_index]
-      sto_tarray.pop(sto_index)
-      sto_farray.pop(sto_index)
-      sto_reflesh()
-      cb()
+      try:
+        idx=sto_tarray.index(sto_time)
+      except:
+        print "sto::update id not found",sto_time
+      else:
+        cb=sto_farray[idx]
+        sto_tarray.pop(idx)
+        sto_farray.pop(idx)
+        sto_reflesh()
+        cb()
 
 ####Message box
 buffer=[]
