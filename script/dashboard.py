@@ -22,17 +22,11 @@ from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
 from rtk_tools import dictlib
 
 Config={
-  "recipe":{
-    "link": "recipe",
-    "dir": "recipe.d"
-  },
+#  "recipe":{"link": "recipe","dir": "recipe.d"},
   "confirm":"Stop anyway",
   "autoclose":10,
   "altitude":"+0",
-  "font":{
-    "family":"System",
-    "size":10
-  },
+  "font":{"family":"System", "size":10},
   "color":{
     "background": "#00FF00",
     "lit": "#FF8800",
@@ -223,18 +217,25 @@ def sto_update():
         cb()
 
 ####Message box
-buffer=[]
-def cb_sub(msg):
-  buffer.append(msg.data)
-def cb_log():
-  if len(buffer)==0: return
+mbuffer=[]
+ebuffer=[]
+def cb_mbox_push(n,msg):
+  t=time.time()
+  s="["+str(t)+"] "+msg.data
+  if n==0: mbuffer.append(s)
+  else: ebuffer.append(s)
+def mbox_popup(buf,pos,fg,bg):
   msg=""
-  while len(buffer)>0:
-    msg=msg+buffer.pop(0)+"\n"
-  sub=tk.Tk()
-  text=tk.Text(sub,width=100,height=20,background="#FFFFCC")
+  while len(buf)>0:
+    msg=msg+buf.pop(0)+"\n"
+  mbox=tk.Tk()
+  mbox.geometry(pos)
+  text=tk.Text(mbox,width=100,height=20,foreground=fg,background=bg)
   text.pack(side='left',fill='y',anchor='nw')
   text.insert("1.0",msg)
+def cb_mbox_pop():
+  if len(ebuffer)>0: mbox_popup(ebuffer,"+0+50","#CC0000","#FFFFFF")
+  if len(mbuffer)>0: mbox_popup(mbuffer,"+0+300","#0000CC","#FFFFFF")
 
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
@@ -243,9 +244,11 @@ try:
 except Exception as e:
   print "get_param exception:",e.args
 thispath=commands.getoutput("rospack find rtk_tools")
-commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
-linkpath=thispath+"/../"+Config["recipe"]["link"]
-dirpath=thispath+"/../"+Config["recipe"]["dir"]
+if "load" in Config:
+  commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
+if "recipe" in Config:
+  linkpath=thispath+"/../"+Config["recipe"]["link"]
+  dirpath=thispath+"/../"+Config["recipe"]["dir"]
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -253,19 +256,11 @@ except Exception as e:
 
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
-rospy.Subscriber("/message",String,cb_sub)
-rospy.Subscriber("/error",String,cb_sub)
+rospy.Subscriber("/message",String,functools.partial(cb_mbox_push,0))
+rospy.Subscriber("/error",String,functools.partial(cb_mbox_push,2))
 pub_Y3=rospy.Publisher("~loaded",Bool,queue_size=1)
 pub_E3=rospy.Publisher("~failed",Bool,queue_size=1)
 pub_msg=rospy.Publisher("/message",String,queue_size=1)
-
-####reflect file link to parameter server
-ln=commands.getoutput("ls -l "+linkpath)
-if "->" in ln:
-  dst=re.sub(r".*->","",ln)
-  Param["recipe"]=re.sub(r".*/","",dst)
-  rospy.set_param("/dashboard",Param)
-commands.getoutput("rosparam load "+linkpath+"/param.yaml")
 
 ####Layout####
 normalfont=(Config["font"]["family"],Config["font"]["size"],"normal")
@@ -290,13 +285,20 @@ starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
 stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
 openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
-tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_log).pack(side='left',anchor='nw',padx=(0,0))
-tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
-wRecipe=tk.Entry(root,font=normalfont,width=10)
-wRecipe.pack(side='left',fill='y')
-wRecipe.insert(0,Param["recipe"])
-tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
-tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save).pack(side='left',fill='y',padx=(0,30))
+tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_mbox_pop).pack(side='left',anchor='nw',padx=(0,0))
+if "recipe" in Config:
+  ln=commands.getoutput("ls -l "+linkpath)
+  if "->" in ln:
+    dst=re.sub(r".*->","",ln)
+    Param["recipe"]=re.sub(r".*/","",dst)
+    rospy.set_param("/dashboard",Param)
+  commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+  tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
+  wRecipe=tk.Entry(root,font=normalfont,width=10)
+  wRecipe.pack(side='left',fill='y')
+  wRecipe.insert(0,Param["recipe"])
+  tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
+  tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save).pack(side='left',fill='y',padx=(0,30))
 
 for key in Config.keys():
   if key.startswith('launch'):
