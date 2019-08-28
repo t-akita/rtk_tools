@@ -1,0 +1,10 @@
+config:
+  dashboard:
+    altitude: '+0'
+    font:
+      size: 10
+    color:
+      background: "#00AAFF"
+      lit: "#FF7700"
+      unlit: "#000000"
+      mask: "#555555"
