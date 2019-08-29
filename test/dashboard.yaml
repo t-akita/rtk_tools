@@ -8,3 +8,8 @@ config:
       lit: "#FF7700"
       unlit: "#000000"
       mask: "#555555"
+
+    launch_setup:
+      label: "セットアップ"
+      package: rtk_tools
+      file: panel.launch
