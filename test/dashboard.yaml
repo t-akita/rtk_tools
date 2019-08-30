@@ -8,8 +8,21 @@ config:
       lit: "#FF7700"
       unlit: "#000000"
       mask: "#555555"
-
+    launch_ycam:
+      label: "カメラドライバ"
+      package: rovi
+      file: ycam3sxga.launch
+      confirm: True
+    launch_rcalib:
+      label: "キャリブレーション"
+      package: rovi_utils
+      file: rcalib.launch
     launch_setup:
       label: "セットアップ"
       package: rtk_tools
       file: panel.launch
+    launch_viewer:
+      label: "Viewer"
+      package: rtk_tools
+      file: viewer.launch
+
