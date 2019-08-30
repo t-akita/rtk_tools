@@ -91,4 +91,5 @@ while not rospy.is_shutdown():
   except Exception as e:
     print "panel update exception",e.args
     sys.exit(0)
+  time.sleep(0.01)
 

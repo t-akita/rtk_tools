@@ -328,3 +328,4 @@ for key in Config.keys():
 while not rospy.is_shutdown():
   sto_update()
   root.update()
+  time.sleep(0.01)
