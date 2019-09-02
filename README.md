@@ -1,5 +1,17 @@
 # ROS-Tk Tools  
 
+## インストール
+1. Tk-inter  
+最古(?)のGUIフレームワークTcl/TkのPython版。Tclが手軽になった。
+~~~
+sudo apt get install python-tk
+~~~
+2. tkfilebrowser  
+ファイル管理Widgets
+~~~
+pip install tkfilebrowser --user
+~~~
+
 ## Library
 ### dictlib  
 dictlibは2つの辞書の合成を行うライブラリです。呼出し書式は以下のようになります。

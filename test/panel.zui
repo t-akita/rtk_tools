@@ -1,5 +1,5 @@
 "class":"Title",  "label":"Panelテスト"
-"class":"Text",   "label":"レシピ名","name":"/recipe"
 "class":"Number", "label":"カメラ露光時間(1000-30000us)","name":"/rovi/live/camera/ExposureTime"
-"class":"Echo",   "label":"座標 X\nY\nZ\nQx\nQy\nQz","name":"/robot/tf"
-"class":"Pub",    "label":"3Dスキャン","name":"/request/capture","data":".data=True","confirm":"3Dスキャン実行","button":"実行"
+"class":"Number", "name":"/rovi/live/camera/SoftwareTriggerRate","label":"フレームレート(2-10)"
+"class":"Number", "name":"/rovi/pshift_genpc/projector/Mode","label":"プロジェクタモード"
+"class":"Pub",    "label":"3Dスキャン","name":"/rovi/X1","data":".data=True","button":"実行"
