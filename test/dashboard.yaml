@@ -25,4 +25,8 @@ config:
       label: "Viewer"
       package: rtk_tools
       file: viewer.launch
-
+    indicator_rovi:
+      label: "YCAM"
+      topic: /rovi/stat
+      type: std_msgs/Bool
+      timeout: 2
