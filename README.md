@@ -11,8 +11,13 @@ sudo apt get install python-tk
 ~~~
 pip install tkfilebrowser --user
 ~~~
+3. xterm  
+単体node(.launch以外)はrosrunにて起動します。rosrunはxtermから起動しコンソール出力を識別し易くしています。
+~~~
+sudo apt install xterm
+~~~
 
-## Library
+## 解説
 ### dictlib  
 dictlibは2つの辞書の合成を行うライブラリです。呼出し書式は以下のようになります。
 ~~~  

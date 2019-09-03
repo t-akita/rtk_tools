@@ -100,11 +100,13 @@ def cb_run(n):
   if msgBoxWait is not None: return
   item=Launches[n]
   if item["state"]==0:
-    cmd=["roslaunch",item["package"],item["file"]];
+    if ".launch" in item["file"]:
+      cmd=["roslaunch",item["package"],item["file"]];
+    else:
+      cmd=["xterm","-e","rosrun",item["package"],item["file"]];
     if "args" in item:
       for k in item["args"]:
         cmd.append(k+":="+str(item["args"][k]))
-    print "dash",cmd
     proc=subprocess.Popen(cmd)
     item["tag"]["foreground"]=litcolor
     item["tag"]["font"]=boldfont
