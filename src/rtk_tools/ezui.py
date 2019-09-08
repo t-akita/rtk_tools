@@ -19,6 +19,7 @@ from .number import rtkNumber
 from .echo import rtkEcho
 from .pub import rtkPub
 from .title import rtkTitle
+from .popup import rtkPopup
 from . import dictlib
 
 class rtkEzui(object):
