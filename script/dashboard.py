@@ -16,8 +16,9 @@ from std_msgs.msg import String
 
 import Tkinter as tk
 import tkMessageBox
-import tkFileDialog as filedialog
-from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
+#import tkFileDialog as filedialog
+from tkfilebrowser import askopendirname
+from rtk_tools.filebrowser import asksaveasfilename
 
 from rtk_tools import dictlib
 
@@ -74,25 +75,38 @@ def cb_open_dir():
   global msgBox,msgBoxWait
   if msgBoxWait is not None: return
   msgBox=tk.Tk()
-  msgBox.title("Open dir")
+  msgBox.title("Load Recipe")
   msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
   ret=askopendirname(parent=msgBox,initialdir=dirpath,initialfile="")
-  if msgBoxWait is None: return
+  if msgBoxWait is None: return  #returned by autoclose
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
-  dir=re.sub(r".*/recipe.d","",ret)
+  dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
   if dir != "":
     msg=String()
     msg.data=dir.replace("/","")
     cb_load(msg)
 
-def cb_save():
-  global msgBox
-  if msgBox is not None: return
-  ret=asksaveasfilename(parent=root,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
+def cb_save_as():
+  global msgBox,msgBoxWait
+  if msgBoxWait is not None: return
+  msgBox=tk.Tk()
+  msgBox.title("Save Recipe as")
+  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
+  ret=asksaveasfilename(parent=msgBox,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
+  if msgBoxWait is None: return  #returned by autoclose
+  msgBox.after_cancel(msgBoxWait)
+  msgBoxWait=None
+  msgBox.destroy()
   if ret != "":
-    print "save",ret
+    dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
+    recipe=dir.replace("/","")
+    commands.getoutput("cp -a "+dirpath+"/"+Param["recipe"]+" "+dirpath+"/"+recipe)
+    Param["recipe"]=recipe
+    wRecipe.delete(0,tk.END)
+    wRecipe.insert(0,Param["recipe"])
+    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
 
 ####launch manager############
 def cb_run(n):
@@ -300,7 +314,7 @@ if "recipe" in Config:
   wRecipe.pack(side='left',fill='y')
   wRecipe.insert(0,Param["recipe"])
   tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
-  tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save).pack(side='left',fill='y',padx=(0,30))
+  tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save_as).pack(side='left',fill='y',padx=(0,30))
 
 for key in Config.keys():
   if key.startswith('launch'):
