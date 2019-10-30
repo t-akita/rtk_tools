@@ -57,10 +57,12 @@ def cb_autoclose():
   if msgBoxWait is not None: msgBox.destroy()
   msgBoxWait=None
 ####recipe manager############
+def cb_wRecipe(s):
+  wRecipe.delete(0,tk.END)
+  wRecipe.insert(0,s)
 def cb_load(msg):
   Param["recipe"]=msg.data
-  wRecipe.delete(0,tk.END)
-  wRecipe.insert(0,Param["recipe"])
+  set_timeout(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
     rospy.set_param("/dashboard",Param)
     commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
