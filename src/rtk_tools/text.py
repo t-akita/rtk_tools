@@ -51,13 +51,8 @@ class rtkText(rtkWidget):
     value=dictlib.value(self.Origin,self.prop["name"])
     if value is not None:
       self.io.config(background='#AAAAAA')
-      f=tkMessageBox.askyesno("Confirm",self.prop["message"])
-      if f:
-        self.value=value
+      if tkMessageBox.askyesno("Confirm",self.prop["message"]):
         rospy.set_param(self.prop["name"],value)
-        if type(value) is not str: value=str(value)
-        param=eval(self.lb+"'"+value+"'"+self.rb)
-        dictlib.merge(self.Param,param)
       self.io.config(background='#FFFFFF')
   def on_timeout(self):
     try:
