@@ -4,6 +4,7 @@ import time
 from . import dictlib
 
 class rtkWidget(object):
+  Origin={}
   Param={}
   Config={
     "width":(0,10),

@@ -12,6 +12,16 @@ def cross(DCT,dct):
     elif k in dct:
       DCT[k]=dct[k]
 
+def value(DCT,key):
+  keys=key.split('/')
+  dic=DCT
+  for k in [k for k in keys if len(k)>0]:
+    if k in dic:
+      dic=dic[k]
+    else:
+      return None
+  return dic
+
 if __name__ == '__main__':
   Param={
     "car":{
