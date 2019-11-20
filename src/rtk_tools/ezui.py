@@ -51,6 +51,12 @@ class rtkEzui(object):
         "icon":"run.png",
         "confirm":False,
         "message":""
+      },
+      "Text":{
+        "message":"Reload the original string"
+      },
+      "Number":{
+        "message":"Reload the original value"
       }
     }
     dictlib.merge(self.prop,conf)
@@ -106,9 +112,17 @@ class rtkEzui(object):
       self.saveicon=tk.PhotoImage(file=iconpath+self.prop["icon"]["save"])
     tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
     tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.saveicon,command=functools.partial(self.cb_save,self.prop["dump"])).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
+    try:
+      filename=self.prop["dump"]
+      yf=open(filename, "r")
+      rtkWidget.Origin=yaml.load(yf)
+      yf.close()
+    except:
+      rospy.logwarn("ezui::origin parameter load error "+filename)
+      return
 
   def cb_pagefwd(self):
     if rtkPage.pageNo<len(rtkPage.pages)-1:
@@ -122,7 +136,8 @@ class rtkEzui(object):
       rtkPage.show(-1)
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
-  def cb_save(self,filename):
+  def cb_save(self):
+    filename=self.prop["dump"]
     f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"])
     if f is False: return
     try:
@@ -141,6 +156,7 @@ class rtkEzui(object):
       yf=open(filename,"w")
       dictlib.cross(param,rtkWidget.Param)
       yaml.dump(param,yf,default_flow_style=False)
+      rtkWidget.Origin=param
     except:
       rospy.logwarn("ezui::dump exception")
     yf.close()

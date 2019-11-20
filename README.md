@@ -4,7 +4,7 @@
 1. Tk-inter  
 最古(?)のGUIフレームワークTcl/TkのPython版。Tclが手軽になった。
 ~~~
-sudo apt get install python-tk
+sudo apt-get install python-tk
 ~~~
 2. tkfilebrowser  
 ファイル管理Widgets

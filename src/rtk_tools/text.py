@@ -2,7 +2,7 @@ from .widget import rtkWidget
 from . import dictlib
 
 import Tkinter as tk
-import ttk
+import tkMessageBox
 
 import roslib
 import rospy
@@ -21,6 +21,7 @@ class rtkText(rtkWidget):
     self.io.bind('<Key-Return>',self.on_change)
     self.io.bind('<KeyPress>',self.on_key)
     self.io.bind('<FocusOut>',self.on_abort)
+    self.io.bind('<Button-3>',self.on_resume)
     self.set_timeout(1)
 
   def parse(self,str):
@@ -46,6 +47,13 @@ class rtkText(rtkWidget):
   def on_abort(self,event):
     self.io.config(foreground='#000000')
     self.set(self.value)
+  def on_resume(self,event):
+    value=dictlib.value(self.Origin,self.prop["name"])
+    if value is not None:
+      self.io.config(background='#AAAAAA')
+      if tkMessageBox.askyesno("Confirm",self.prop["message"]):
+        rospy.set_param(self.prop["name"],value)
+      self.io.config(background='#FFFFFF')
   def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])
