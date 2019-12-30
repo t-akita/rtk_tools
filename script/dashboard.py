@@ -242,18 +242,18 @@ def cb_mbox_push(n,msg):
   s="["+str(t)+"] "+msg.data
   if n==0: mbuffer.append(s)
   else: ebuffer.append(s)
-def mbox_popup(buf,pos,fg,bg):
+def mbox_popup(buf,pos,wid,fg,bg):
   msg=""
   while len(buf)>0:
     msg=msg+buf.pop(0)+"\n"
   mbox=tk.Tk()
   mbox.geometry(pos)
-  text=tk.Text(mbox,width=100,height=20,foreground=fg,background=bg)
+  text=tk.Text(mbox,width=wid,height=20,foreground=fg,background=bg)
   text.pack(side='left',fill='y',anchor='nw')
   text.insert("1.0",msg)
 def cb_mbox_pop():
-  if len(ebuffer)>0: mbox_popup(ebuffer,"+0+50","#CC0000","#FFFFFF")
-  if len(mbuffer)>0: mbox_popup(mbuffer,"+0+300","#0000CC","#FFFFFF")
+  if len(ebuffer)>0: mbox_popup(ebuffer,"+0+50",90,"#CC0000","#FFFFFF")
+  if len(mbuffer)>0: mbox_popup(mbuffer,"+0+300",150,"#0000CC","#FFFFFF")
 
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
