@@ -19,8 +19,8 @@ import tkMessageBox
 #import tkFileDialog as filedialog
 from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
-
 from rtk_tools import dictlib
+from dashlog import dashLog
 
 Config={
 #  "recipe":{"link": "recipe","dir": "recipe.d"},
@@ -235,25 +235,16 @@ def sto_update():
         cb()
 
 ####Message box
-mbuffer=[]
-ebuffer=[]
+mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
+ebox=dashLog("+0+50",90,"#CC0000","#FFFFFF")
 def cb_mbox_push(n,msg):
-  t=time.time()
-  s="["+str(t)+"] "+msg.data
-  if n==0: mbuffer.append(s)
-  else: ebuffer.append(s)
-def mbox_popup(buf,pos,fg,bg):
-  msg=""
-  while len(buf)>0:
-    msg=msg+buf.pop(0)+"\n"
-  mbox=tk.Tk()
-  mbox.geometry(pos)
-  text=tk.Text(mbox,width=100,height=20,foreground=fg,background=bg)
-  text.pack(side='left',fill='y',anchor='nw')
-  text.insert("1.0",msg)
+  if n==0:
+    set_timeout(functools.partial(mbox.push,msg),0)
+  else:
+    set_timeout(functools.partial(ebox.push,msg),0)
 def cb_mbox_pop():
-  if len(ebuffer)>0: mbox_popup(ebuffer,"+0+50","#CC0000","#FFFFFF")
-  if len(mbuffer)>0: mbox_popup(mbuffer,"+0+300","#0000CC","#FFFFFF")
+  mbox.popup()
+  ebox.popup()
 
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
