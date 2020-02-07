@@ -58,9 +58,11 @@ def cb_autoclose():
   msgBoxWait=None
 ####recipe manager############
 def cb_wRecipe(s):
+  if wRecipe is None: return
   wRecipe.delete(0,tk.END)
   wRecipe.insert(0,s)
 def cb_load(msg):
+  if wRecipe is None: return
   Param["recipe"]=msg.data
   set_timeout(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
@@ -75,6 +77,7 @@ def cb_load(msg):
 
 def cb_open_dir():
   global msgBox,msgBoxWait
+  if wRecipe is None: return
   if msgBoxWait is not None: return
   msgBox=tk.Tk()
   msgBox.title("Load Recipe")
@@ -92,6 +95,7 @@ def cb_open_dir():
 
 def cb_save_as():
   global msgBox,msgBoxWait
+  if wRecipe is None: return
   if msgBoxWait is not None: return
   msgBox=tk.Tk()
   msgBox.title("Save Recipe as")
@@ -308,12 +312,15 @@ if "recipe" in Config:
   wRecipe.insert(0,Param["recipe"])
   tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
   tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save_as).pack(side='left',fill='y',padx=(0,30))
+else:
+  wRecipe=None
 
 for key in Config.keys():
   if key.startswith('launch'):
     item=Config[key]
     if "file" not in item: continue
     n=len(Launches)
+    print "item",item
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
     wbtn=tk.Button(root,image=starticon,background=bgcolor,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
