@@ -1,5 +1,5 @@
 <launch>
   <rosparam command="load" file="$(find rtk_tools)/test/dashboard.yaml" />
-  <node pkg="rtk_tools" type="dashboard.py" name="" output="screen">
-  </node>
+  <rosparam command="load" file="$(find rtk_tools)/test/param.yaml" />
+  <node pkg="rtk_tools" type="dashboard.py" name="" output="screen" />
 </launch>

@@ -15,21 +15,27 @@ class rtkNumber(rtkText):
   def __init__(self,page,prop):
     super(rtkNumber,self).__init__(page,prop)
     self.io.config(justify="right")
+    self.vect=None
+    if "index" not in self.prop: self.prop["index"]=0
 
   def set(self,value):
     if type(value) is str:
       super(rtkNumber,self).set(value)
+      return
+    self.io.delete(0,tk.END)
+    if len(self.prop["format"])>0:
+      fmt="{:"+self.prop["format"]+"}"
+      self.io.insert(0,fmt.format(value))
     else:
-      self.io.delete(0,tk.END)
-      if len(self.prop["format"])>0:
-        fmt="{:"+self.prop["format"]+"}"
-        self.io.insert(0,fmt.format(value))
-      else:
-        self.io.insert(0,str(value))
-      param=eval(self.lb+str(value)+self.rb)
-      dictlib.merge(self.Param,param)
-      self.value=value
+      self.io.insert(0,str(value))
+    param=eval(self.lb+str(value)+self.rb)
+    dictlib.merge(self.Param,param)
+    self.value=value
+    if self.vect is None:
       rospy.set_param(self.prop["name"],value)
+    else:
+      self.vect[self.prop["index"]]=value
+      rospy.set_param(self.prop["name"],self.vect)
 
   def on_change(self,event):
     try:
@@ -46,6 +52,9 @@ class rtkNumber(rtkText):
   def on_timeout(self):
     try:
       value=rospy.get_param(self.prop["name"])
+      if type(value) is list:
+        self.vect=value
+        value=self.vect[self.prop["index"]]
       if type(value) is str:
         if "." in value:
           value=float(value)

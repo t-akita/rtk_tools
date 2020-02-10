@@ -17,6 +17,7 @@ config:
       file: panel.launch
 
   panel:
+    lift: False
     color:
       background: "#00AAFF"
     dump: solve.yaml

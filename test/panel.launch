@@ -1,3 +1,6 @@
 <launch>
-  <node pkg="rtk_tools" type="panel.py" name="" args="conf:=$(find rtk_tools)/test/panel.zui" />
+  <node pkg="rtk_tools" type="panel.py" name="" args="
+    conf:=$(find rtk_tools)/test/panel.zui
+    dump:=WPC/recipe2/REINFORCE_3/20191017-105722/solve.yaml"
+  output="screen" />
 </launch>
