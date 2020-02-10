@@ -1,6 +1,8 @@
 config:
   dashboard:
     altitude: '+0'
+    message:
+      halt: "プログラムを停止します"
     font:
       size: 10
     color:
@@ -8,25 +10,16 @@ config:
       lit: "#FF7700"
       unlit: "#000000"
       mask: "#555555"
-    launch_ycam:
-      label: "カメラドライバ"
-      package: rovi
-      file: ycam3sxga.launch
-      confirm: True
-    launch_rcalib:
-      label: "キャリブレーション"
-      package: rovi_utils
-      file: rcalib.launch
+
     launch_setup:
-      label: "セットアップ"
+      label: "パネル"
       package: rtk_tools
       file: panel.launch
-    launch_viewer:
-      label: "Viewer"
-      package: rtk_tools
-      file: viewer.launch
-    indicator_rovi:
-      label: "YCAM"
-      topic: /rovi/stat
-      type: std_msgs/Bool
-      timeout: 2
+
+  panel:
+    color:
+      background: "#00AAFF"
+    dump: solve.yaml
+    dump_dir@: /wpc/recipeName
+    dump_ver@: /wpc/recipeNumber
+    dump_prefix: WPC/recipe
