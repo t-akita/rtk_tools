@@ -21,6 +21,7 @@ from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
 from rtk_tools import dictlib
 from dashlog import dashLog
+import timeout
 
 Config={
 #  "recipe":{"link": "recipe","dir": "recipe.d"},
@@ -48,6 +49,7 @@ Param={
 }
 Launches=[]
 Indicates=[]
+Displays=[]
 
 ####dialog box control########
 msgBox=None
@@ -64,7 +66,7 @@ def cb_wRecipe(s):
 def cb_load(msg):
   if wRecipe is None: return
   Param["recipe"]=msg.data
-  set_timeout(functools.partial(cb_wRecipe,Param["recipe"]),0)
+  timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
     rospy.set_param("/dashboard",Param)
     commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
@@ -133,7 +135,7 @@ def cb_run(n):
     item["button"]["image"]=stopicon
     item["process"]=proc
     item["state"]=1
-    set_timeout(functools.partial(cb_runstat,(n,2)),3)
+    timeout.set(functools.partial(cb_runstat,(n,2)),3)
   elif item["state"]==2:
     if "confirm" in item:
       if item["confirm"]:
@@ -156,7 +158,7 @@ def cb_run(n):
         if f is False: return
     item["process"].terminate()
     item["state"]=3
-    set_timeout(functools.partial(cb_stop,n),1)
+    timeout.set(functools.partial(cb_stop,n),1)
 
 def cb_runstat(tpl):
   global Launches
@@ -172,22 +174,22 @@ def cb_stop(n):
   item["state"]=0
 
 ####Indicator############
-def cb_bool(n,msg):
+def cb_indicator(n,msg):
   global Indicates
   item=Indicates[n]
   if msg.data:
-    set_timeout(functools.partial(cb_turnon,n),0)
+    timeout.set(functools.partial(cb_turnon,n),0)
   else:
-    if "sto" in item: clear_timeout(item["sto"])
-    set_timeout(functools.partial(cb_turnoff,n),0)
+    if "sto" in item: timeout.clear(item["sto"])
+    timeout.set(functools.partial(cb_turnoff,n),0)
 
 def cb_turnon(n):
   global Indicates
   item=Indicates[n]
   item["tag"]["foreground"]=litcolor
   item["tag"]["font"]=boldfont
-  if "sto" in item: clear_timeout(item["sto"])
-  item["sto"]=set_timeout(functools.partial(cb_turnoff,n),item["timeout"])
+  if "sto" in item: timeout.clear(item["sto"])
+  item["sto"]=timeout.set(functools.partial(cb_turnoff,n),item["timeout"])
 
 def cb_turnoff(n):
   global Indicates
@@ -196,56 +198,29 @@ def cb_turnoff(n):
   item["tag"]["foreground"]=unlitcolor
   item["tag"]["font"]=normalfont
 
-####setTimeout
-sto_time=0
-sto_tarray=[]
-sto_farray=[]
-def sto_reflesh():
-  global sto_time,sto_tarray,sto_farray
-  if len(sto_tarray)>0:
-    sto_time=min(sto_tarray)
-  else:
-    sto_time=0
-def set_timeout(cb,delay):
-  global sto_time,sto_tarray,sto_farray
-  t=time.time()+delay
-  sto_tarray.append(t)
-  sto_farray.append(cb)
-  sto_reflesh()
-  return t
-def clear_timeout(t):
-  if len(sto_tarray)>0:
-    try:
-      idx=sto_tarray.index(t)
-    except:
-      print "sto::clear id not found",t
-    else:
-      sto_tarray.pop(idx)
-      sto_farray.pop(idx)
-      sto_reflesh()
-def sto_update():
-  global sto_time,sto_tarray,sto_farray
-  if sto_time>0:
-    if time.time()>sto_time:
-      try:
-        idx=sto_tarray.index(sto_time)
-      except:
-        print "sto::update id not found",sto_time
-      else:
-        cb=sto_farray[idx]
-        sto_tarray.pop(idx)
-        sto_farray.pop(idx)
-        sto_reflesh()
-        cb()
+####Display parametr############
+def cb_display(n):
+  global Displays
+  item=Displays[n]
+  widget=item["tag"]
+  try:
+    val=str(rospy.get_param(item["name"]))
+    if val!=widget["text"]:
+      widget.configure(text=val)
+  except Exception:
+    print "cb_display::get param failed",item["name"]
+  n=n+1
+  if n>=len(Displays): n=0
+  timeout.set(functools.partial(cb_display,n),0.5)
 
 ####Message box
 mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
 ebox=dashLog("+0+50",90,"#CC0000","#FFFFFF")
 def cb_mbox_push(n,msg):
   if n==0:
-    set_timeout(functools.partial(mbox.push,msg),0)
+    timeout.set(functools.partial(mbox.push,msg),0)
   else:
-    set_timeout(functools.partial(ebox.push,msg),0)
+    timeout.set(functools.partial(ebox.push,msg),0)
 def cb_mbox_pop():
   mbox.popup()
   ebox.popup()
@@ -315,7 +290,8 @@ if "recipe" in Config:
 else:
   wRecipe=None
 
-for key in Config.keys():
+ckeys=Config.keys()
+for key in ckeys:
   if key.startswith('launch'):
     item=Config[key]
     if "file" not in item: continue
@@ -330,18 +306,31 @@ for key in Config.keys():
     item["state"]=0
     if "auto" in item:
       if item["auto"]>=0:
-        set_timeout(functools.partial(cb_run,n),item["auto"])
+        timeout.set(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
-  elif key.startswith('indic'):
+
+ckeys.sort(reverse=True)
+for key in ckeys:
+  if key.startswith('indic'):
     item=Config[key]
     n=len(Indicates)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
     item["tag"]=wlabel
-    rospy.Subscriber(item["topic"],Bool,functools.partial(cb_bool,n))
+    rospy.Subscriber(item["topic"],Bool,functools.partial(cb_indicator,n))
     Indicates.append(item)
+  elif key.startswith('disp'):
+    item=Config[key]
+    print "item",item
+    n=len(Displays)
+    wlabel=tk.Label(root,font=boldfont,background=Config["color"]["background"],foreground=litcolor)
+    wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
+    item["tag"]=wlabel
+    Displays.append(item)
+
+if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
 
 while not rospy.is_shutdown():
-  sto_update()
+  timeout.update()
   root.update()
   time.sleep(0.01)

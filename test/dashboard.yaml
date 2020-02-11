@@ -16,6 +16,22 @@ config:
       package: rtk_tools
       file: panel.launch
 
+    indicator1:
+      label: "YCAM"
+      topic: /rovi/stat
+      type: std_msgs/Bool
+      timeout: 2
+    indicator2:
+      label: "通信"
+      topic: /rsocket/stat
+      type: std_msgs/Bool
+      timeout: 2
+
+    display1:
+      name: /wpc/recipeName
+    display2:
+      name: /wpc/recipeNumber
+
   panel:
     lift: False
     color:
