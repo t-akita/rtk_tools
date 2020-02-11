@@ -3,6 +3,7 @@ import time
 import copy
 import commands
 import functools
+import os
 
 import Tkinter as tk
 import ttk
@@ -30,6 +31,9 @@ class rtkEzui(object):
     self.prop={
       "geom":"300x750-0+0",
       "dump":"",
+      "dump_prefix":"",
+      "dump_dir@":"",
+      "dump_ver@":"",
       "conf":"panel.ui",
       "lift":True,
       "message":{
@@ -62,13 +66,34 @@ class rtkEzui(object):
     dictlib.merge(self.prop,conf)
     if type(self.prop["lift"]) is str: self.prop["lift"]=eval(self.prop["lift"])
     cf=copy.copy(conf)
-    cf.pop("geom")
-    cf.pop("dump")
-    cf.pop("conf")
-    cf.pop("lift")
+    if "geom" in cf: cf.pop("geom")
+    if "dump" in cf: cf.pop("dump")
+    if "dump_pefix" in cf: cf.pop("dump_prefix")
+    if "dump_dir@" in cf: cf.pop("dump_dir@")
+    if "dump_ver@" in cf: cf.pop("dump_ver@")
+    if "conf" in cf: cf.pop("conf")
+    if "lift" in cf: cf.pop("lift")
     dictlib.merge(rtkPage.Config,cf)
     dictlib.merge(rtkWidget.Config,cf)
-    return
+
+  def filepath(self):
+    path=self.prop["dump_prefix"]
+    try:
+      path=path+"/"+rospy.get_param(self.prop["dump_dir@"])
+    except Exception as e:
+      rospy.logwarn("dump_dir@ error")
+    try:
+      subdir=os.listdir(path)
+      subdir=filter(lambda f:os.path.isdir(os.path.join(path,f)),subdir)
+      subdir.sort()
+      path=path+"/"+subdir[int(rospy.get_param(self.prop["dump_ver@"]))]
+    except Exception as e:
+      rospy.logwarn("dump_ver@ error")
+    if len(path)>0: path=path+"/"+self.prop["dump"]
+    else: path=self.prop["dump"]
+    print "ezui::filepath",path
+    return path
+
   def top_on(self,root):
     pane=tk.Toplevel(root)
     pane.geometry(self.prop["geom"])
@@ -116,7 +141,7 @@ class rtkEzui(object):
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
     try:
-      filename=self.prop["dump"]
+      filename=self.filepath()
       yf=open(filename, "r")
       rtkWidget.Origin=yaml.load(yf)
       yf.close()
@@ -137,7 +162,7 @@ class rtkEzui(object):
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_save(self):
-    filename=self.prop["dump"]
+    filename=self.filepath()
     f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"])
     if f is False: return
     try:

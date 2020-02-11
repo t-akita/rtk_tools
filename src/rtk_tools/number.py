@@ -28,14 +28,15 @@ class rtkNumber(rtkText):
       self.io.insert(0,fmt.format(value))
     else:
       self.io.insert(0,str(value))
-    param=eval(self.lb+str(value)+self.rb)
-    dictlib.merge(self.Param,param)
-    self.value=value
     if self.vect is None:
+      param=eval(self.lb+str(value)+self.rb)
       rospy.set_param(self.prop["name"],value)
     else:
       self.vect[self.prop["index"]]=value
+      param=eval(self.lb+str(self.vect)+self.rb)
       rospy.set_param(self.prop["name"],self.vect)
+    dictlib.merge(self.Param,param)
+    self.value=value
 
   def on_change(self,event):
     try:

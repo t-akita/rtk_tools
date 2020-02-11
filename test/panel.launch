@@ -1,6 +1,7 @@
 <launch>
   <node pkg="rtk_tools" type="panel.py" name="" args="
     conf:=$(find rtk_tools)/test/panel.zui
-    dump:=WPC/recipe2/REINFORCE_3/20191017-105722/solve.yaml"
+    geom:=400x400-0+0
+    dump:=solve.yaml"
   output="screen" />
 </launch>

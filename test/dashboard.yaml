@@ -20,7 +20,6 @@ config:
     lift: False
     color:
       background: "#00AAFF"
-    dump: solve.yaml
     dump_dir@: /wpc/recipeName
     dump_ver@: /wpc/recipeNumber
     dump_prefix: WPC/recipe
