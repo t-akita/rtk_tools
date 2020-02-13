@@ -16,6 +16,14 @@ class rtkEcho(rtkTopic):
       if n<0: continue
       s=s[n+2:]
       if len(s)==0: continue
+      width=self.Config["width"][1]
+      if len(s)>width:
+        try:
+          v=float(s)
+          fmt="{:."+str(width-6)+"e}"
+          s=fmt.format(v)
+        except Exception:
+          s="-"*width
       sd=sd+s
       h=h+1
       if h<self.height: sd=sd+"\n"
