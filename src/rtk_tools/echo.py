@@ -11,16 +11,20 @@ class rtkEcho(rtkTopic):
     sa=str(msg).split("\n")
     sd=""
     h=0
+    width=self.Config["width"][1]
+    f=""
+    if "format" in self.prop: f="{:"+self.prop["format"]+"}"
     for s in sa:
       n=s.find(': ')
       if n<0: continue
       s=s[n+2:]
       if len(s)==0: continue
-      width=self.Config["width"][1]
-      if len(s)>width:
+      fmt=f
+      if (len(fmt)==0 and len(s)>width):
+        fmt="{:."+str(width-6)+"e}"
+      if len(fmt)>0:
         try:
           v=float(s)
-          fmt="{:."+str(width-6)+"e}"
           s=fmt.format(v)
         except Exception:
           s="-"*width
@@ -37,7 +41,7 @@ class rtkEcho(rtkTopic):
       font=self.label["font"],
       width=self.Config["width"][1],
       height=self.height)
-    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
+    self.io.grid(row=len(page.widgets),column=1,sticky="nswe")
     self.io.tag_configure("tag-right",justify="right")
     self.disp=""
   def on_connect(self,topic_type):

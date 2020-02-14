@@ -10,7 +10,7 @@ class rtkTitle(rtkWidget):
     self.label.config(background=self.Config["color"]["title"][1])
     self.label.config(anchor='w')
     self.label.grid_forget()
-    self.label.grid(row=len(page.widgets),column=1,columnspan=2,sticky="nsew",pady=(3,0))
+    self.label.grid(row=len(page.widgets),column=0,columnspan=2,sticky="nsew",pady=(3,0))
   def on_timeout(self):
     pass
 

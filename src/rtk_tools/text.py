@@ -15,7 +15,7 @@ class rtkText(rtkWidget):
     self.io=tk.Entry(page.frame,
       font=self.label["font"],
       width=self.Config["width"][1])
-    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
+    self.io.grid(row=len(page.widgets),column=1,sticky="nswe")
     self.io.insert(0,'---')
     self.value=''
     self.io.bind('<Key-Return>',self.on_change)

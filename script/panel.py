@@ -3,6 +3,7 @@
 import numpy as np
 import yaml
 import time
+import re
 import sys
 
 import Tkinter as tk
@@ -47,6 +48,10 @@ def parse_argv(argv):
     tokens = arg.split(":=")
     if len(tokens) == 2:
       key = tokens[0]
+      if re.match(r'\([ ]*([0-9.]+,[ ]*)*[0-9.]+[ ]*\)$',tokens[1]):
+        # convert tuple-like-string to tuple
+        args[key]=eval(tokens[1])
+        continue
       args[key]=tokens[1]
   return args
 ####ROS Init####
@@ -72,7 +77,7 @@ dictlib.merge(Config,parse_argv(sys.argv))
 ####Layout####
 root=tk.Tk()
 ttk.Style(root).theme_use("clam")
-root.title("panel")
+root.title(rospy.get_name())
 root.protocol("WM_DELETE_WINDOW", cb_close)
 root.config(background=Config["color"]["background"])
 

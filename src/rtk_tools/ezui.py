@@ -36,6 +36,7 @@ class rtkEzui(object):
       "dump_ver@":"",
       "conf":"panel.ui",
       "lift":True,
+      "weight": (2, 1),
       "message":{
         "save":"Overwrite yaml",
       },
@@ -125,9 +126,9 @@ class rtkEzui(object):
         continue
     f.close()
     self.ctrl=tk.Frame(self.pane,bd=2,background='#444444')
+    self.ctrl.columnconfigure(0,weight=1)
     self.ctrl.columnconfigure(1,weight=1)
     self.ctrl.columnconfigure(2,weight=1)
-    self.ctrl.columnconfigure(3,weight=1)
     iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
@@ -135,9 +136,9 @@ class rtkEzui(object):
       self.rarricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["rarr"])
     if self.saveicon is None:
       self.saveicon=tk.PhotoImage(file=iconpath+self.prop["icon"]["save"])
-    tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=0,column=0,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=0,column=1,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=2,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
     try:
