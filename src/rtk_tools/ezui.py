@@ -126,9 +126,10 @@ class rtkEzui(object):
         continue
     f.close()
     self.ctrl=tk.Frame(self.pane,bd=2,background='#444444')
-    self.ctrl.columnconfigure(0,weight=1)
+    self.ctrl.columnconfigure(0,weight=4)
     self.ctrl.columnconfigure(1,weight=1)
-    self.ctrl.columnconfigure(2,weight=1)
+    self.ctrl.columnconfigure(2,weight=4)
+    self.ctrl.columnconfigure(3,weight=5)
     iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
@@ -137,8 +138,11 @@ class rtkEzui(object):
     if self.saveicon is None:
       self.saveicon=tk.PhotoImage(file=iconpath+self.prop["icon"]["save"])
     tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=0,column=0,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=0,column=1,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=2,padx=1,pady=1,sticky='nsew')
+    self.pshow=ttk.Label(self.ctrl,font=(self.prop["font"]["family"],self.prop["font"]["size"]),anchor='c')
+    self.pshow.grid(row=0,column=1,padx=1,pady=1,sticky='nsew')
+    self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
+    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=0,column=2,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=3,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
     try:
@@ -154,17 +158,19 @@ class rtkEzui(object):
     if rtkPage.pageNo<len(rtkPage.pages)-1:
       self.ctrl.pack_forget()
       rtkPage.show(1)
+      self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_pagebwd(self):
     if rtkPage.pageNo>0:
       self.ctrl.pack_forget()
       rtkPage.show(-1)
+      self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_save(self):
     filename=self.filepath()
-    f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"])
+    f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"]+"["+filename.rsplit('/',1)[1]+"]")
     if f is False: return
     try:
       yf=open(filename, "r")
