@@ -20,7 +20,8 @@ from rtk_tools import dictlib
 rospy.init_node("report",anonymous=True)
 Config={
   "width":800,
-  "altitude":"-24",
+  "rows":4,
+  "altitude":-24,
   "font":{
     "family":"System",
     "size":10
@@ -37,20 +38,24 @@ Values={}
 
 def to_report(dat):
   global Values
-  print "report",dat
   if "recipe" in Config:
     if len(Values["recipe"][0].cget("text"))==0:
       rp=rospy.get_param(Config["recipe"])
       Values["recipe"][0].configure(text=rp)
   for k,v in dat.items():
     if k in Values:
-      Values[k][0].configure(text=str(Config["format"].format(v[0])))
-      if(v[1]==0):
+      if(hasattr(v,"__iter__")):
+        Values[k][0].configure(text=str(Config["format"].format(v[0])))
+        if(v[1]==0):
+          Values[k][0].configure(foreground=okcolor[0])
+          Values[k][0].configure(background=okcolor[1])
+        else:
+          Values[k][0].configure(foreground=ngcolor[0])
+          Values[k][0].configure(background=ngcolor[1])
+      else:
+        Values[k][0].configure(text=str(Config["format"].format(v)))
         Values[k][0].configure(foreground=okcolor[0])
         Values[k][0].configure(background=okcolor[1])
-      else:
-        Values[k][0].configure(foreground=ngcolor[0])
-        Values[k][0].configure(background=ngcolor[1])
   return
 def cb_report(s):
   print "str",type(s.data)
@@ -61,6 +66,8 @@ def cb_report(s):
 
 def to_update():
   global Values
+  if "recipe" in Config:
+    if len(Values["recipe"][0].cget("text"))==0: return
   for row in Values.values():
     for i in range(len(row)-1,0,-1):
       row[i].configure(text=row[i-1].cget("text"))
@@ -106,6 +113,7 @@ rospy.Subscriber("/report",String,cb_report)
 rospy.Subscriber("/report/update",Bool,cb_update)
 
 ####Layout####
+rows=int(Config["rows"])
 font=(Config["font"]["family"],Config["font"]["size"],"normal")
 bgcolor=Config["color"]["background"]
 lbcolor=Config["color"]["label"]
@@ -114,7 +122,7 @@ ngcolor=Config["color"]["ng"]
 
 root=tk.Tk()
 root.title("Report")
-root.geometry(str(Config["width"])+"x100+0"+Config["altitude"])
+root.geometry(str(Config["width"])+"x100+0"+str(Config["altitude"]))
 frame=tk.Frame(root,bd=2,background=bgcolor)
 frame.pack(fill='x',anchor='n',expand=1)
 
@@ -125,7 +133,7 @@ for n,s in enumerate(Config["labels"]):
   label.grid(row=0,column=n,padx=1,pady=1,sticky='nsew')
   k=Config["keys"][n]
   Values[k]=[]
-  for i in range(4):
+  for i in range(rows):
     label=ttk.Label(frame,font=font,foreground=okcolor[0],background=okcolor[1],anchor='e')
     label.grid(row=i+1,column=n,padx=1,pady=1,sticky='nsew')
     label.configure(text='')
