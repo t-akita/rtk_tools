@@ -173,6 +173,15 @@ def cb_stop(n):
   item["button"]["image"]=starticon
   item["state"]=0
 
+shutdown=False
+def cb_shutdown(n):
+  global shutdown
+  for item in Launches:
+    if item["state"]==2:
+      item["process"].terminate()
+  rospy.sleep(1)
+  shutdown=True
+
 ####Indicator############
 def cb_indicator(n,msg):
   global Indicates
@@ -246,6 +255,7 @@ except Exception as e:
 rospy.Subscriber("~load",String,cb_load)
 rospy.Subscriber("/message",String,functools.partial(cb_mbox_push,0))
 rospy.Subscriber("/error",String,functools.partial(cb_mbox_push,2))
+rospy.Subscriber("/shutdown",Bool,cb_shutdown)
 pub_Y3=rospy.Publisher("~loaded",Bool,queue_size=1)
 pub_E3=rospy.Publisher("~failed",Bool,queue_size=1)
 pub_msg=rospy.Publisher("/message",String,queue_size=1)
@@ -331,6 +341,7 @@ for key in ckeys:
 if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
 
 while not rospy.is_shutdown():
+  if shutdown: break
   timeout.update()
   root.update()
   time.sleep(0.01)
