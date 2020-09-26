@@ -34,17 +34,19 @@ Config={
   },
   "format":'{:.3g}'
 }
-Values={}
+
+Values={}    #Widget of Report table
+Reports=0    #Subscribed Report count 
+Snap={}      #Log for one cycle
+Logs=[]      #Log for life cycle
 
 def to_report(dat):
-  global Values
-  if "recipe" in Config:
-    if len(Values["recipe"][0].cget("text"))==0:
-      rp=rospy.get_param(Config["recipe"])
-      Values["recipe"][0].configure(text=rp)
+  global Values,Reports,Snap
   for k,v in dat.items():
+    Reports=Reports+1
     if k in Values:
       if(hasattr(v,"__iter__")):
+        Snap[k]=v[0]
         Values[k][0].configure(text=str(Config["format"].format(v[0])))
         if(v[1]==0):
           Values[k][0].configure(foreground=okcolor[0])
@@ -53,6 +55,7 @@ def to_report(dat):
           Values[k][0].configure(foreground=ngcolor[0])
           Values[k][0].configure(background=ngcolor[1])
       else:
+        Snap[k]=v
         Values[k][0].configure(text=str(Config["format"].format(v)))
         Values[k][0].configure(foreground=okcolor[0])
         Values[k][0].configure(background=okcolor[1])
@@ -65,17 +68,34 @@ def cb_report(s):
   timeout.set(functools.partial(to_report,dic),0)
 
 def to_update():
-  global Values
-  if "recipe" in Config:
-    if len(Values["recipe"][0].cget("text"))==0: return
-  for row in Values.values():
-    for i in range(len(row)-1,0,-1):
-      row[i].configure(text=row[i-1].cget("text"))
-    row[0].configure(text="")
-    row[0]["text"]=""
+  global Values,Reports
+  if Reports==0:
+    for row in Values.values():
+      for i in range(len(row)-1,0,-1):
+        row[i].configure(text=row[i-1].cget("text"))
+      row[0].configure(text="")
+      row[0]["text"]=""
+    if "recipe" in Config:
+      rp=rospy.get_param(Config["recipe"])
+      Values["recipe"][0].configure(text=rp)
+    Reports=1
   return
 def cb_update(s):
   timeout.set(to_update,0)
+def cb_complete(s):
+  global Reports
+  if Reports>1: Reports=0
+  ldat=[]
+  for k in Config["keys"]:
+    if k in Snap:
+      ldat.append(Snap[k])
+     else:
+      ldat.append(-0.111111)
+  Logs.append(ldat)
+
+def cb_dump(s):
+  np.savetxt('report_log.csv',np.asarray(Logs))
+  return
 
 ##############
 def parse_argv(argv):
@@ -111,6 +131,8 @@ if "recipe" in Config:
 ####sub pub
 rospy.Subscriber("/report",String,cb_report)
 rospy.Subscriber("/report/update",Bool,cb_update)
+rospy.Subscriber("/report/complete",Bool,cb_complete)
+rospy.Subscriber("/report/dump",Bool,cb_dump)
 
 ####Layout####
 rows=int(Config["rows"])
