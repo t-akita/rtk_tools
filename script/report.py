@@ -32,7 +32,8 @@ Config={
     "ok": ("#000000","#CCCCCC"),
     "ng": ("#FF0000","#CCCCCC")
   },
-  "format":'{:.3g}'
+  "format":'{:.3g}',
+  "delay": 1
 }
 
 Values={}    #Widget of Report table
@@ -42,28 +43,27 @@ Logs=[]      #Log for life cycle
 
 def to_report(dat):
   global Values,Reports,Snap
-  for k,v in dat.items():
-    Reports=Reports+1
-    if k in Values:
-      if(hasattr(v,"__iter__")):
-        Snap[k]=v[0]
-        Values[k][0].configure(text=str(Config["format"].format(v[0])))
-        if(v[1]==0):
+  if Reports>=1:
+    for k,v in dat.items():
+      if k in Values:
+        Reports=Reports+1
+        if(hasattr(v,"__iter__")):
+          Snap[k]=v[0]
+          Values[k][0].configure(text=str(Config["format"].format(v[0])))
+          if(v[1]==0):
+            Values[k][0].configure(foreground=okcolor[0])
+            Values[k][0].configure(background=okcolor[1])
+          else:
+            Values[k][0].configure(foreground=ngcolor[0])
+            Values[k][0].configure(background=ngcolor[1])
+        else:
+          Snap[k]=v
+          Values[k][0].configure(text=str(Config["format"].format(v)))
           Values[k][0].configure(foreground=okcolor[0])
           Values[k][0].configure(background=okcolor[1])
-        else:
-          Values[k][0].configure(foreground=ngcolor[0])
-          Values[k][0].configure(background=ngcolor[1])
-      else:
-        Snap[k]=v
-        Values[k][0].configure(text=str(Config["format"].format(v)))
-        Values[k][0].configure(foreground=okcolor[0])
-        Values[k][0].configure(background=okcolor[1])
-  return
+
 def cb_report(s):
-  print "str",type(s.data)
   ss=s.data[-1:-1]
-  print ss
   dic=eval(s.data)
   timeout.set(functools.partial(to_report,dic),0)
 
@@ -75,6 +75,7 @@ def to_update():
         row[i].configure(text=row[i-1].cget("text"))
       row[0].configure(text="")
       row[0]["text"]=""
+  if Reports<=1:
     if "recipe" in Config:
       rp=rospy.get_param(Config["recipe"])
       Values["recipe"][0].configure(text=rp)
@@ -82,16 +83,19 @@ def to_update():
   return
 def cb_update(s):
   timeout.set(to_update,0)
-def cb_complete(s):
+def to_complete():
   global Reports
-  if Reports>1: Reports=0
-  ldat=[]
-  for k in Config["keys"]:
-    if k in Snap:
-      ldat.append(Snap[k])
-     else:
-      ldat.append(-0.111111)
-  Logs.append(ldat)
+  if Reports>1:
+    Reports=0
+    ldat=[]
+    for k in Config["keys"]:
+      if k in Snap:
+        ldat.append(Snap[k])
+      else:
+        ldat.append(np.nan)
+    Logs.append(ldat)
+def cb_complete(s):
+  timeout.set(to_complete,Config["delay"])
 
 def cb_dump(s):
   np.savetxt('report_log.csv',np.asarray(Logs))
