@@ -98,7 +98,9 @@ def cb_complete(s):
   timeout.set(to_complete,Config["delay"])
 
 def cb_dump(s):
-  np.savetxt('report_log.csv',np.asarray(Logs))
+  global Reports
+  to_complete()
+  np.savetxt('report_log.txt',np.asarray(Logs))
   return
 
 ##############

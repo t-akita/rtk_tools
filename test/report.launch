@@ -1,0 +1,7 @@
+<launch>
+  <rosparam command="load" file="$(find rtk_tools)/test/report.yaml" />
+  <node pkg="rtk_tools" type="report.py" name="">
+    <remap from="/report/update" to="/request/capture" />
+    <remap from="/report/complete" to="/response/solve" />
+  </node>
+</launch>
