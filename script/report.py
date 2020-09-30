@@ -100,7 +100,7 @@ def cb_complete(s):
 def cb_dump(s):
   global Reports
   to_complete()
-  np.savetxt('report_log.txt',np.asarray(Logs))
+  np.savetxt('report_dump.txt',np.asarray(Logs))
   return
 
 ##############
