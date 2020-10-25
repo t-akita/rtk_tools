@@ -1,10 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import numpy as np
 import sys
 import os
 import time
-import commands
 import subprocess
 import functools
 import re
@@ -14,8 +13,8 @@ import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+import tkinter.messagebox as tkMessageBox
 #import tkFileDialog as filedialog
 from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
@@ -69,8 +68,8 @@ def cb_load(msg):
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
     rospy.set_param("/dashboard",Param)
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
-    commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+    subprocess.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    subprocess.getoutput("rosparam load "+linkpath+"/param.yaml")
     res=Bool(); res.data=True; pub_Y3.publish(res)
     pub_msg.publish("recipe_manager::cb_load "+Param["recipe"])
   else:
@@ -110,11 +109,11 @@ def cb_save_as():
   if ret != "":
     dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
     recipe=dir.replace("/","")
-    commands.getoutput("cp -a "+dirpath+"/"+Param["recipe"]+" "+dirpath+"/"+recipe)
+    subprocess.getoutput("cp -a "+dirpath+"/"+Param["recipe"]+" "+dirpath+"/"+recipe)
     Param["recipe"]=recipe
     wRecipe.delete(0,tk.END)
     wRecipe.insert(0,Param["recipe"])
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    subprocess.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
 
 ####launch manager############
 def cb_run(n):
@@ -217,7 +216,7 @@ def cb_display(n):
     if val!=widget["text"]:
       widget.configure(text=val)
   except Exception:
-    print "cb_display::get param failed",item["name"]
+    print("cb_display::get param failed",item["name"])
   n=n+1
   if n>=len(Displays): n=0
   timeout.set(functools.partial(cb_display,n),0.5)
@@ -239,17 +238,17 @@ rospy.init_node("dashboard",anonymous=True)
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
-  print "get_param exception:",e.args
-thispath=commands.getoutput("rospack find rtk_tools")
+  print("get_param exception:",e.args)
+thispath=subprocess.getoutput("rospack find rtk_tools")
 if "load" in Config:
-  commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
+  subprocess.getoutput("rosparam load "+thispath+"/../"+Config["load"])
 if "recipe" in Config:
   linkpath=thispath+"/../"+Config["recipe"]["link"]
   dirpath=thispath+"/../"+Config["recipe"]["dir"]
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
@@ -285,12 +284,12 @@ openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
 tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_mbox_pop).pack(side='left',anchor='nw',padx=(0,0))
 if "recipe" in Config:
-  ln=commands.getoutput("ls -l "+linkpath)
+  ln=subprocess.getoutput("ls -l "+linkpath)
   if "->" in ln:
     dst=re.sub(r".*->","",ln)
     Param["recipe"]=re.sub(r".*/","",dst)
     rospy.set_param("/dashboard",Param)
-  commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+  subprocess.getoutput("rosparam load "+linkpath+"/param.yaml")
   tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
   wRecipe=tk.Entry(root,font=normalfont,width=10)
   wRecipe.pack(side='left',fill='y')
@@ -306,7 +305,7 @@ for key in ckeys:
     item=Config[key]
     if "file" not in item: continue
     n=len(Launches)
-    print "item",item
+    print("item",item)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
     wbtn=tk.Button(root,image=starticon,background=bgcolor,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
@@ -319,7 +318,10 @@ for key in ckeys:
         timeout.set(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
 
-ckeys.sort(reverse=True)
+tmp = list(ckeys)
+tmp.sort(reverse=True)
+ckeys = tuple(tmp)
+# ckeys.sort(reverse=True)
 for key in ckeys:
   if key.startswith('indic'):
     item=Config[key]
@@ -331,7 +333,7 @@ for key in ckeys:
     Indicates.append(item)
   elif key.startswith('disp'):
     item=Config[key]
-    print "item",item
+    print("item",item)
     n=len(Displays)
     wlabel=tk.Label(root,font=boldfont,background=Config["color"]["background"],foreground=litcolor)
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))

@@ -1,13 +1,14 @@
 import yaml
 import time
 import copy
-import commands
+import subprocess
 import functools
 import os
 
-import Tkinter as tk
-import ttk
-import tkMessageBox
+import tkinter as tk
+import tkinter.ttk as ttk
+import tkinter.messagebox as tkMessageBox
+# import tkMessageBox
 
 import rospy
 import roslib
@@ -92,7 +93,7 @@ class rtkEzui(object):
       rospy.logwarn("dump_ver@ error")
     if len(path)>0: path=path+"/"+self.prop["dump"]
     else: path=self.prop["dump"]
-    print "ezui::filepath",path
+    print("ezui::filepath",path)
     return path
 
   def top_on(self,root):
@@ -106,7 +107,7 @@ class rtkEzui(object):
     f=open(self.prop["conf"],'r')
     lines=f.readlines()
     for n,line in enumerate(lines):
-      print "ezui::parsing line ",n
+      print("ezui::parsing line ",n)
       try:
         prop=eval("{"+line+"}")
       except:
@@ -130,7 +131,7 @@ class rtkEzui(object):
     self.ctrl.columnconfigure(1,weight=1)
     self.ctrl.columnconfigure(2,weight=4)
     self.ctrl.columnconfigure(3,weight=5)
-    iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+    iconpath=subprocess.getoutput("rospack find rtk_tools")+"/icon/"
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
     if self.rarricon is None:

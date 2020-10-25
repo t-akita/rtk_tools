@@ -22,7 +22,7 @@ def clear(t):
     try:
       idx=sto_tarray.index(t)
     except:
-      print "sto::clear id not found",t
+      print("sto::clear id not found",t)
     else:
       sto_tarray.pop(idx)
       sto_farray.pop(idx)
@@ -34,7 +34,7 @@ def update():
       try:
         idx=sto_tarray.index(sto_time)
       except:
-        print "sto::update id not found",sto_time
+        print("sto::update id not found",sto_time)
       else:
         cb=sto_farray[idx]
         sto_tarray.pop(idx)

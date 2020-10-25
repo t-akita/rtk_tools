@@ -1,9 +1,9 @@
 from .topic import rtkTopic
 from . import dictlib
-import commands
+import subprocess
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+import tkinter.messagebox as tkMessageBox
 import roslib
 import rospy
 from std_msgs.msg import Bool
@@ -15,7 +15,7 @@ class rtkPub(rtkTopic):
     dictlib.merge(self.prop,{"message":"","confirm":False,"icon":"run.png"})
   def __init__(self,page,prop):
     super(rtkPub,self).__init__(page,prop)
-    iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+    iconpath=subprocess.getoutput("rospack find rtk_tools")+"/icon/"
     if self.buttonicon is None:
       self.buttonicon=tk.PhotoImage(file=iconpath+self.prop["icon"])
     self.io=tk.Button(page.frame,image=self.buttonicon,command=self.cb_pub)

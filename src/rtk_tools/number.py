@@ -1,8 +1,8 @@
 from .text import rtkText
 from . import dictlib
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 import roslib
 import rospy
