@@ -317,11 +317,7 @@ for key in ckeys:
       if item["auto"]>=0:
         timeout.set(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
-
-tmp = list(ckeys)
-tmp.sort(reverse=True)
-ckeys = tuple(tmp)
-# ckeys.sort(reverse=True)
+ckeys = sorted(ckeys,reverse=True)
 for key in ckeys:
   if key.startswith('indic'):
     item=Config[key]
