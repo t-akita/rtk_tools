@@ -77,9 +77,11 @@ def to_update():
       row[0]["text"]=""
   if Reports<=1:
     if "recipe" in Config:
-      rp=rospy.get_param(Config["recipe"])
-      Values["recipe"][0].configure(text=rp)
+      Snap["__recipe__"]=rospy.get_param(Config["recipe"])
+      Values["__recipe__"][0].configure(text=Snap["__recipe__"])
     Reports=1
+  Snap["__count__"]=len(Logs)+1
+  Values["__count__"][0].configure(text=str(Snap["__count__"]))
   return
 def cb_update(s):
   timeout.set(to_update,0)
@@ -100,7 +102,10 @@ def cb_complete(s):
 def cb_dump(s):
   global Reports
   to_complete()
-  np.savetxt('report_dump.txt',np.asarray(Logs))
+  f=open('report_dump.txt', 'w')
+  for x in Logs:
+    f.write(str(x).lstrip('[').rstrip(']')+"\n")
+  f.close()
   return
 
 ##############
@@ -131,8 +136,11 @@ except Exception as e:
 dictlib.merge(Config,parse_argv(sys.argv))
 
 if "recipe" in Config:
-  Config["keys"].insert(0,"recipe")
+  Config["keys"].insert(0,"__recipe__")
   Config["labels"].insert(0,"recipe")
+
+Config["keys"].insert(0,"__count__")
+Config["labels"].insert(0,"#")
 
 ####sub pub
 rospy.Subscriber("/report",String,cb_report)
