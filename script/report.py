@@ -103,9 +103,12 @@ def cb_dump(s):
   global Reports
   to_complete()
   f=open('report_dump.txt', 'w')
-  for x in Logs:
-    f.write(str(x).lstrip('[').rstrip(']')+"\n")
-  f.close()
+  f.write(str(Config["labels"]).lstrip('[').rstrip(']')+"\n")
+  map(lambda x:f.write(str(x).lstrip('[').rstrip(']')+"\n"),Logs)
+#
+#  for x in Logs:
+#    f.write(str(x).lstrip('[').rstrip(']')+"\n")
+#  f.close()
   return
 
 ##############
