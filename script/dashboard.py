@@ -41,7 +41,8 @@ Config={
     "start":"start.png",
     "stop":"stop.png",
     "open":"open.png",
-    "copy":"copy.png"
+    "copy":"copy.png",
+    "redraw":"pencil.png",
   }
 }
 Param={
@@ -71,10 +72,10 @@ def cb_load(msg):
     rospy.set_param("/dashboard",Param)
     commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
-    res=Bool(); res.data=True; pub_Y3.publish(res)
+    pub_Y3.publish(mTrue)
     pub_msg.publish("recipe_manager::cb_load "+Param["recipe"])
   else:
-    pub_E3.publish(Bool())
+    pub_E3.publish(mFalse)
     pub_msg.publish("recipe_manager::cb_load failed "+Param["recipe"])
 
 def cb_open_dir():
@@ -174,13 +175,17 @@ def cb_stop(n):
   item["state"]=0
 
 shutdown=False
-def cb_shutdown(n):
+def cb_shutdown(msg):
   global shutdown
   for item in Launches:
     if item["state"]==2:
       item["process"].terminate()
   rospy.sleep(1)
   shutdown=True
+
+####Redraw############
+def cb_redraw():
+  timeout.set(lambda: pub_redraw.publish(mTrue),0)
 
 ####Indicator############
 def cb_indicator(n,msg):
@@ -251,6 +256,11 @@ try:
 except Exception as e:
   print "get_param exception:",e.args
 
+####Bools
+mTrue=Bool()
+mTrue.data=True
+mFalse=Bool()
+
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
 rospy.Subscriber("/message",String,functools.partial(cb_mbox_push,0))
@@ -259,6 +269,7 @@ rospy.Subscriber("/shutdown",Bool,cb_shutdown)
 pub_Y3=rospy.Publisher("~loaded",Bool,queue_size=1)
 pub_E3=rospy.Publisher("~failed",Bool,queue_size=1)
 pub_msg=rospy.Publisher("/message",String,queue_size=1)
+pub_redraw=rospy.Publisher("/request/redraw",Bool,queue_size=1)
 
 ####Layout####
 normalfont=(Config["font"]["family"],Config["font"]["size"],"normal")
@@ -283,6 +294,7 @@ starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
 stopicon=tk.PhotoImage(file=iconpath+Config["icon"]["stop"])
 openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
+redrawicon=tk.PhotoImage(file=iconpath+Config["icon"]["redraw"])
 tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_mbox_pop).pack(side='left',anchor='nw',padx=(0,0))
 if "recipe" in Config:
   ln=commands.getoutput("ls -l "+linkpath)
@@ -319,6 +331,7 @@ for key in ckeys:
         timeout.set(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
 
+tk.Button(root,image=redrawicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_redraw).pack(side='right',anchor='nw',padx=(0,0))
 ckeys.sort(reverse=True)
 for key in ckeys:
   if key.startswith('indic'):
