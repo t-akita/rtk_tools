@@ -1,7 +1,7 @@
 from .widget import rtkWidget
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import subprocess
 import roslib
 import rospy
@@ -18,7 +18,7 @@ class rtkTopic(rtkWidget):
       self.on_connect(topic_type)
       self.discon=False
     except:
-      print "rtkTopic::["+self.prop["name"]+"] not registered"
+      print("rtkTopic::["+self.prop["name"]+"] not registered")
   def __init__(self,page,prop):
     super(rtkTopic,self).__init__(page,prop)
     self.discon=True

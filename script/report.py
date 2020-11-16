@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import numpy as np
 import sys
@@ -13,8 +13,8 @@ from std_msgs.msg import Bool
 from std_msgs.msg import String
 
 import timeout
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 from rtk_tools import dictlib
 
 rospy.init_node("report",anonymous=True)
@@ -134,7 +134,7 @@ except:
 try:
   dictlib.merge(Config,conf)
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 dictlib.merge(Config,parse_argv(sys.argv))
 

@@ -1,7 +1,7 @@
 from .topic import rtkTopic
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import subprocess
 import roslib
 import rospy

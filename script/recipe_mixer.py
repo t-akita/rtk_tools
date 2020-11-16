@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -50,11 +50,11 @@ def trim(f):
 
 if len(sys.argv)>1:
   if sys.argv[1]=='trim':
-    print 'run as trim mode'
+    print('run as trim mode')
     map(trim,files)
   else:
-    print 'run as merge mode'
+    print('run as merge mode')
     map(merge,files)
 else:
-  print 'run as merge mode'
+  print('run as merge mode')
   map(merge,files)
