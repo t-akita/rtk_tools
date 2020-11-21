@@ -137,6 +137,9 @@ def cb_run(n):
     item["process"]=proc
     item["state"]=1
     timeout.set(functools.partial(cb_runstat,(n,2)),3)
+    if "pre" in item:
+      print "dash pre",item["pre"]
+      subprocess.Popen(item["pre"].split())
   elif item["state"]==2:
     if "confirm" in item:
       if item["confirm"]:
@@ -160,6 +163,9 @@ def cb_run(n):
     item["process"].terminate()
     item["state"]=3
     timeout.set(functools.partial(cb_stop,n),1)
+    if "post" in item:
+      print "dash post",item["post"]
+      subprocess.Popen(item["post"].split())
 
 def cb_runstat(tpl):
   global Launches
