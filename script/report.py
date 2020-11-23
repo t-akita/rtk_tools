@@ -6,6 +6,7 @@ import os
 import time
 import functools
 import re
+import socket
 
 import roslib
 import rospy
@@ -160,6 +161,7 @@ okcolor=Config["color"]["ok"]
 ngcolor=Config["color"]["ng"]
 
 root=tk.Tk()
+root.client(socket.gethostname())
 root.title("Report")
 root.geometry(str(Config["width"])+"x100+0"+str(Config["altitude"]))
 frame=tk.Frame(root,bd=2,background=bgcolor)
