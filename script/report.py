@@ -38,12 +38,13 @@ Config={
 }
 
 Values={}    #Widget of Report table
-Reports=0    #Subscribed Report count 
+Reports=0    #Subscribed Report count
 Snap={}      #Log for one cycle
 Logs=[]      #Log for life cycle
+Gate=0
 
 def to_report(dat):
-  global Values,Reports,Snap
+  global Values,Reports,Snap,Gate
   if Reports>=1:
     for k,v in dat.items():
       if k in Values:
@@ -69,7 +70,9 @@ def cb_report(s):
   timeout.set(functools.partial(to_report,dic),0)
 
 def to_update():
-  global Values,Reports
+  global Values,Reports,Gate
+  if Gate>0: to_complete()
+  Gate=0
   if Reports==0:
     for row in Values.values():
       for i in range(len(row)-1,0,-1):
@@ -98,7 +101,8 @@ def to_complete():
         ldat.append(np.nan)
     Logs.append(ldat)
 def cb_complete(s):
-  timeout.set(to_complete,Config["delay"])
+  global Gate
+  Gate=Gate+1
 
 def cb_dump(s):
   global Reports
