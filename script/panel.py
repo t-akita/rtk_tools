@@ -19,7 +19,7 @@ Config={
   "geom":"300x750-0+0",
   "dump":"",
   "conf":"panel.ui",
-  "lift":True,
+  "lift":False,
   "message":{
     "save":"Overwrite"
   },

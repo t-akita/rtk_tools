@@ -1,5 +1,11 @@
 "class":"Title",  "label":"Panelテスト"
 "class":"Number", "label":"リジェクション","name":"/solver/Rejection"
 "class":"Number", "label":"Zリミット","name":"/solver/zLimit"
-"class":"Number", "label":"Zレンジ-0","name":"/solver/zRange","index":0
-"class":"Number", "label":"Zレンジ-1","name":"/solver/zRange","index":1
+"class":"Number", "label":"二値化タイプ","name":"/left/detector/Binary/ThBinary[0]"
+"class":"Number", "label":"二値化値","name":"/left/detector/Binary/ThBinary[1]"
+"class":"Number", "label":"ROI Type","name":"/left/detector/ROIEdge[0]/Type"
+"class":"Number", "label":"ROI Data[0]","name":"/left/detector/ROIEdge[0]/Data[0]"
+"class":"Number", "label":"ROI Data[1]","name":"/left/detector/ROIEdge[0]/Data[1]"
+"class":"Number", "label":"ROI Data[2]","name":"/left/detector/ROIEdge[0]/Data[2]"
+"class":"Number", "label":"ROI Data[3]","name":"/left/detector/ROIEdge[0]/Data[3]"
+"class":"Text", "label":"Recipe","name":"/wpc/recipeName"
