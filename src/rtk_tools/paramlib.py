@@ -17,7 +17,6 @@ def get_param(tag):
   tags=tag.split('[',1)
   if len(tags)==1:
     return rospy.get_param(tag)
-  tags=tag.split('[',1)
   prm=rospy.get_param(tags[0])
   pass1=re1.sub(r'["\1"][',tags[1])
   pass2=re2.sub(r'["\1"]',pass1)
@@ -27,7 +26,6 @@ def set_param(tag,sval):
   tags=tag.split('[',1)
   if len(tags)==1:
     return rospy.set_param(tag,sval)
-  tags=tag.split('[',1)
   prm=rospy.get_param(tags[0])
   pass1=re1.sub(r'["\1"][',tags[1])
   pass2=re2.sub(r'["\1"]',pass1)
