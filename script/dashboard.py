@@ -51,6 +51,7 @@ Param={
 Launches=[]
 Indicates=[]
 Displays=[]
+RecipeName=''
 
 ####dialog box control########
 msgBox=None
@@ -60,23 +61,35 @@ def cb_autoclose():
   if msgBoxWait is not None: msgBox.destroy()
   msgBoxWait=None
 ####recipe manager############
-def cb_wRecipe(s):
+def cb_wRecipe(rc):
   if wRecipe is None: return
   wRecipe.delete(0,tk.END)
-  wRecipe.insert(0,s)
+  if type(rc) is str:
+    wRecipe.insert(0,rc)
+  elif type(rc) is dict:
+    s=rc.pop("name")
+    for key in rc:
+      s=s+":"+str(rc[key])
+    wRecipe.insert(0,s)
 def cb_load(msg):
+  global Param,RecipeName
   if wRecipe is None: return
-  Param["recipe"]=msg.data
+  recipe=msg.data.split(':')
+  RecipeName=recipe[0]
+  if len(recipe)==1:
+    Param["recipe"]=RecipeName
+  else:
+    Param["recipe"]={}
+    Param["recipe"]["name"]=RecipeName
+    Param["recipe"]["revision"]=int(recipe[1])
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
-  if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
+  if os.system("ls "+dirpath+"/"+RecipeName)==0:
     rospy.set_param("/dashboard",Param)
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
     pub_Y3.publish(mTrue)
-    pub_msg.publish("recipe_manager::cb_load "+Param["recipe"])
   else:
     pub_E3.publish(mFalse)
-    pub_msg.publish("recipe_manager::cb_load failed "+Param["recipe"])
 
 def cb_open_dir():
   global msgBox,msgBoxWait
@@ -97,7 +110,7 @@ def cb_open_dir():
     cb_load(msg)
 
 def cb_save_as():
-  global msgBox,msgBoxWait
+  global RecipeName,msgBox,msgBoxWait
   if wRecipe is None: return
   if msgBoxWait is not None: return
   msgBox=tk.Tk()
@@ -111,11 +124,13 @@ def cb_save_as():
   if ret != "":
     dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
     recipe=dir.replace("/","")
-    commands.getoutput("cp -a "+dirpath+"/"+Param["recipe"]+" "+dirpath+"/"+recipe)
-    Param["recipe"]=recipe
+    commands.getoutput("cp -a "+dirpath+"/"+RecipeName+" "+dirpath+"/"+recipe)
+    RecipeName=recipe
+    Param["recipe"]=RecipeName
+    rospy.set_param("/dashboard",Param)
     wRecipe.delete(0,tk.END)
     wRecipe.insert(0,Param["recipe"])
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
 
 ####launch manager############
 def cb_run(n):
@@ -306,13 +321,14 @@ if "recipe" in Config:
   ln=commands.getoutput("ls -l "+linkpath)
   if "->" in ln:
     dst=re.sub(r".*->","",ln)
-    Param["recipe"]=re.sub(r".*/","",dst)
+    RecipeName=re.sub(r".*/","",dst)
+    Param["recipe"]=RecipeName
     rospy.set_param("/dashboard",Param)
   commands.getoutput("rosparam load "+linkpath+"/param.yaml")
   tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
   wRecipe=tk.Entry(root,font=normalfont,width=10)
   wRecipe.pack(side='left',fill='y')
-  wRecipe.insert(0,Param["recipe"])
+  wRecipe.insert(0,RecipeName)
   tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
   tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save_as).pack(side='left',fill='y',padx=(0,30))
 else:

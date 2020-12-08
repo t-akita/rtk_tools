@@ -81,7 +81,14 @@ def to_update():
       row[0]["text"]=""
   if Reports<=1:
     if "recipe" in Config:
-      Snap["__recipe__"]=rospy.get_param(Config["recipe"])
+      recipe=rospy.get_param(Config["recipe"])
+      if type(recipe) is str:
+        Snap["__recipe__"]=recipe
+      elif type(recipe) is dict:
+        Snap["__recipe__"]=recipe["name"]
+        recipe.pop("name")
+        for key in recipe:
+          Snap["__recipe__"]=Snap["__recipe__"]+":"+str(recipe[key])
       Values["__recipe__"][0].configure(text=Snap["__recipe__"])
     Reports=1
   Snap["__count__"]=len(Logs)+1
