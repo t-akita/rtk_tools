@@ -64,29 +64,21 @@ def cb_autoclose():
 def cb_wRecipe(rc):
   if wRecipe is None: return
   wRecipe.delete(0,tk.END)
-  if type(rc) is str:
-    wRecipe.insert(0,rc)
-  elif type(rc) is dict:
-    s=rc.pop("name")
-    for key in rc:
-      s=s+":"+str(rc[key])
-    wRecipe.insert(0,s)
+  wRecipe.insert(0,rc)
 def cb_load(msg):
   global Param,RecipeName
   if wRecipe is None: return
+  Param["recipe"]=msg.data
   recipe=msg.data.split(':')
   RecipeName=recipe[0]
-  if len(recipe)==1:
-    Param["recipe"]=RecipeName
-  else:
-    Param["recipe"]={}
-    Param["recipe"]["name"]=RecipeName
-    Param["recipe"]["revision"]=int(recipe[1])
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+RecipeName)==0:
     rospy.set_param("/dashboard",Param)
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
+    commands.getoutput("rm "+linkpath)
+    commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
+    rospy.sleep(0.5)
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+    if len(recipe)>1: commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
     pub_Y3.publish(mTrue)
   else:
     pub_E3.publish(mFalse)
