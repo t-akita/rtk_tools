@@ -3,7 +3,9 @@
 import numpy as np
 import sys
 import os
+import copy
 import time
+import yaml
 import commands
 import subprocess
 import functools
@@ -61,6 +63,33 @@ def cb_autoclose():
   if msgBoxWait is not None: msgBox.destroy()
   msgBoxWait=None
 ####recipe manager############
+def set_param_verify(name,org,dat):
+  while True:
+    ver=rospy.get_param(name)
+    if isinstance(dat,dict):
+      dav=copy.deepcopy(dat)
+      dictlib.intersect(dav,ver)
+    else:
+      dav=ver
+    if dav==dat: return
+    rospy.sleep(0.1)
+  
+def set_param_sync(name,dat):
+  for k in dat:
+    org=rospy.get_param(name+'/'+k)
+    if isinstance(dat[k],dict):
+      dictlib.merge(org,dat[k])
+    else:
+      org=dat[k]
+    rospy.set_param(name+'/'+k,org)
+#    set_param_verify(name+'/'+k,org,dat[k])
+
+def load_param(path):
+  f=open(path);
+  y=yaml.load(f)
+  f.close()
+  set_param_sync("",y)
+
 def cb_wRecipe(rc):
   if wRecipe is None: return
   wRecipe.delete(0,tk.END)
@@ -73,12 +102,14 @@ def cb_load(msg):
   RecipeName=recipe[0]
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+RecipeName)==0:
-    rospy.set_param("/dashboard",Param)
-    commands.getoutput("rm "+linkpath)
+    set_param_sync("/dashboard",Param)
+    commands.getoutput("rm "+linkpath+")
     commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-    rospy.sleep(0.5)
+#    load_param(linkpath+"/param.yaml");
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
-    if len(recipe)>1: commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
+    if len(recipe)>1:
+#      load_param(linkpath++"/"+str(recipe[1])+".yaml");
+      commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
     pub_Y3.publish(mTrue)
   else:
     pub_E3.publish(mFalse)

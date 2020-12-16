@@ -82,6 +82,7 @@ def to_update():
   if Reports<=1:
     if "recipe" in Config:
       recipe=rospy.get_param(Config["recipe"])
+      print "report update",recipe
       if type(recipe) is str:
         Snap["__recipe__"]=recipe
       elif type(recipe) is dict:
@@ -196,4 +197,4 @@ for n,s in enumerate(Config["labels"]):
 while not rospy.is_shutdown():
   timeout.update()
   root.update()
-  time.sleep(1)
+  rospy.sleep(0.1)
