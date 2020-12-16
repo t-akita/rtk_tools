@@ -103,7 +103,7 @@ def cb_load(msg):
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+RecipeName)==0:
     set_param_sync("/dashboard",Param)
-    commands.getoutput("rm "+linkpath+")
+    commands.getoutput("rm "+linkpath)
     commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
 #    load_param(linkpath+"/param.yaml");
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
