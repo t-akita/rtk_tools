@@ -26,7 +26,6 @@ from dashlog import dashLog
 import timeout
 
 Config={
-#  "recipe":{"link": "recipe","dir": "recipe.d"},
   "confirm":"Stop anyway",
   "autoclose":10,
   "altitude":"+0",
@@ -36,6 +35,12 @@ Config={
     "lit": "#FF8800",
     "unlit": "#000000",
     "mask": "#666666"
+  },
+  "display":{
+    "color":{
+      "background": "#FFFF00",
+      "foreground": "#0000FF"
+    }
   },
   "icon":{
     "logo":"logo.png",
@@ -105,10 +110,8 @@ def cb_load(msg):
     set_param_sync("/dashboard",Param)
     commands.getoutput("rm "+linkpath)
     commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-#    load_param(linkpath+"/param.yaml");
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
     if len(recipe)>1:
-#      load_param(linkpath++"/"+str(recipe[1])+".yaml");
       commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
     pub_Y3.publish(mTrue)
   else:
@@ -126,7 +129,7 @@ def cb_open_dir():
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
-  dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
+  dir=re.sub(r".*"+Config["recipe_d"],"",ret)
   if dir != "":
     msg=String()
     msg.data=dir.replace("/","")
@@ -145,7 +148,7 @@ def cb_save_as():
   msgBoxWait=None
   msgBox.destroy()
   if ret != "":
-    dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
+    dir=re.sub(r".*"+Config["recipe_d"],"",ret)
     recipe=dir.replace("/","")
     commands.getoutput("cp -a "+dirpath+"/"+RecipeName+" "+dirpath+"/"+recipe)
     RecipeName=recipe
@@ -283,8 +286,18 @@ def cb_mbox_pop():
   mbox.popup()
   ebox.popup()
 
+def parse_argv(argv):
+  args={}
+  for arg in argv:
+    tokens = arg.split(":=")
+    if len(tokens) == 2:
+      key = tokens[0]
+      args[key] = tokens[1]
+  return args
+
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
+#dictlib.merge(Config,parse_argv(sys.argv))
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -292,9 +305,9 @@ except Exception as e:
 thispath=commands.getoutput("rospack find rtk_tools")
 if "load" in Config:
   commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
-if "recipe" in Config:
-  linkpath=thispath+"/../"+Config["recipe"]["link"]
-  dirpath=thispath+"/../"+Config["recipe"]["dir"]
+if "recipe_d" in Config:
+  dirpath=thispath+"/../"+Config["recipe_d"]
+  linkpath=dirpath+"/../recipe"
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -322,7 +335,7 @@ bgcolor=Config["color"]["background"]
 litcolor=Config["color"]["lit"]
 unlitcolor=Config["color"]["unlit"]
 maskcolor=Config["color"]["mask"]
-iconpath=thispath+"/icon/"
+dispattr=Config["display"];Config.pop("display")  #Patch to display
 
 root=tk.Tk()
 root.title("Dashboard")
@@ -332,6 +345,8 @@ root.geometry(str(root.winfo_screenwidth())+"x26+0"+Config["altitude"])
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
+####ICONS####
+iconpath=thispath+"/icon/"
 logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
 recipeicon=tk.PhotoImage(file=iconpath+Config["icon"]["recipe"])
 starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
@@ -340,14 +355,14 @@ openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
 redrawicon=tk.PhotoImage(file=iconpath+Config["icon"]["redraw"])
 tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_mbox_pop).pack(side='left',anchor='nw',padx=(0,0))
-if "recipe" in Config:
+if "recipe_d" in Config:
   ln=commands.getoutput("ls -l "+linkpath)
   if "->" in ln:
     dst=re.sub(r".*->","",ln)
     RecipeName=re.sub(r".*/","",dst)
     Param["recipe"]=RecipeName
     rospy.set_param("/dashboard",Param)
-  commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+  commands.getoutput("rosparam load "+dirpath+"/"+RecipeName+"/param.yaml")
   tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
   wRecipe=tk.Entry(root,font=normalfont,width=10)
   wRecipe.pack(side='left',fill='y')
@@ -391,7 +406,7 @@ for key in ckeys:
     item=Config[key]
     print "item",item
     n=len(Displays)
-    wlabel=tk.Label(root,font=boldfont,background=Config["color"]["background"],foreground=litcolor)
+    wlabel=tk.Label(root,font=boldfont,background=dispattr["color"]["background"],foreground=dispattr["color"]["foreground"])
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
     item["tag"]=wlabel
     Displays.append(item)
