@@ -129,7 +129,7 @@ def cb_open_dir():
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
-  dir=re.sub(r".*"+Config["recipe_d"],"",ret)
+  dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
   if dir != "":
     msg=String()
     msg.data=dir.replace("/","")
@@ -148,7 +148,7 @@ def cb_save_as():
   msgBoxWait=None
   msgBox.destroy()
   if ret != "":
-    dir=re.sub(r".*"+Config["recipe_d"],"",ret)
+    dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
     recipe=dir.replace("/","")
     commands.getoutput("cp -a "+dirpath+"/"+RecipeName+" "+dirpath+"/"+recipe)
     RecipeName=recipe
@@ -305,9 +305,12 @@ except Exception as e:
 thispath=commands.getoutput("rospack find rtk_tools")
 if "load" in Config:
   commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
-if "recipe_d" in Config:
-  dirpath=thispath+"/../"+Config["recipe_d"]
-  linkpath=dirpath+"/../recipe"
+if "recipe" in Config:
+  srcpath=re.subn(r".*?/","/",thispath[::-1],1)[0][::-1]
+  dirpath=srcpath+Config["recipe"]["dir"]
+  linkpath=srcpath+Config["recipe"]["link"]
+  print "dirpath",dirpath
+  print "linkpath",linkpath
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -355,7 +358,7 @@ openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 copyicon=tk.PhotoImage(file=iconpath+Config["icon"]["copy"])
 redrawicon=tk.PhotoImage(file=iconpath+Config["icon"]["redraw"])
 tk.Button(root,image=logoicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_mbox_pop).pack(side='left',anchor='nw',padx=(0,0))
-if "recipe_d" in Config:
+if "recipe" in Config:
   ln=commands.getoutput("ls -l "+linkpath)
   if "->" in ln:
     dst=re.sub(r".*->","",ln)
