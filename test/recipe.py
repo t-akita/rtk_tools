@@ -25,7 +25,6 @@ from rtk_tools import dictlib
 Config={
   "width":800,
   "rows":4,
-  "autoclose":10,
   "altitude":"+0",
   "font":{"family":"System", "size":10},
   "color":{
@@ -41,13 +40,6 @@ Config={
   "delay": 1
 }
 
-####dialog box control########
-msgBox=None
-msgBoxWait=None
-def cb_autoclose():
-  global msgBox,msgBoxWait
-  if msgBoxWait is not None: msgBox.destroy()
-  msgBoxWait=None
 ####recipe manager############
 def cb_load(msg):
   global Param,RecipeName
@@ -156,18 +148,9 @@ def cb_new(msg):
   pub_save.publish(RecipeName)
 
 def cb_open_dir(name):
-  global msgBox,msgBoxWait
 #  rospy.logerr("recipe_d='%s'", dirpath)
 #  if wRecipe is None: return
-  if msgBoxWait is not None: return
-  msgBox=tk.Tk()
-  msgBox.title(name+" Recipe")
-  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
-  ret=askopendirname(parent=msgBox,title=name,initialdir=dirpath,initialfile="",okbuttontext=name)
-  if msgBoxWait is None: return  #returned by autoclose
-  msgBox.after_cancel(msgBoxWait)
-  msgBoxWait=None
-  msgBox.destroy()
+  ret=askopendirname(parent=root,title=name,initialdir=dirpath,initialfile="",okbuttontext=name)
   dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
   if dir != "":
     msg=String()
@@ -183,17 +166,9 @@ def cb_open_dir(name):
 
 
 def cb_save_as(name):
-  global RecipeName,msgBox,msgBoxWait
+  global RecipeName
 #  if wRecipe is None: return
-  if msgBoxWait is not None: return
-  msgBox=tk.Tk()
-  msgBox.title("Save Recipe as")
-  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
-  ret=asksaveasfilename(parent=msgBox,title="save",defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="ok")
-  if msgBoxWait is None: return  #returned by autoclose
-  msgBox.after_cancel(msgBoxWait)
-  msgBoxWait=None
-  msgBox.destroy()
+  ret=asksaveasfilename(parent=root,title="save",defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="ok")
   dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
   if dir != "":
     if name == 'SaveAs':
@@ -266,6 +241,7 @@ ngcolor=Config["color"]["ng"]
 root=tk.Tk()
 root.title("Recipe")
 root.geometry(str(Config["width"])+"x100+1250"+str(Config["altitude"]))
+root.attributes("-topmost", True)
 frame=tk.Frame(root,bd=2,background=bgcolor)
 frame.pack(fill='x',anchor='n',expand=1)
 
