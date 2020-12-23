@@ -23,7 +23,7 @@ from rtk_tools import dictlib
 #import const
 
 Config={
-  "width":300,
+  "width":800,
   "rows":4,
   "autoclose":10,
   "altitude":"+0",
@@ -33,6 +33,9 @@ Config={
     "label": ("#FFFFFF","#555555"),
     "ok": ("#000000","#CCCCCC"),
     "ng": ("#FF0000","#CCCCCC")
+  },
+  "icon":{
+    "open":"open.png",
   },
   "format":'{:.3g}',
   "delay": 1
@@ -121,6 +124,28 @@ def cb_delete(msg):
   rospy.logerr("delete RecipeName='%s'", RecipeName)
   pub_delete.publish(RecipeName)
 
+def cb_copy_from(msg):
+  global Param,RecipeName
+#  if wRecipe is None: return
+#  Param["recipe"]=msg.data
+  recipe=msg.data.split(':')
+  RecipeName=recipe[0]
+  wCopyFrom.delete(0,tk.END)
+  wCopyFrom.insert(0,RecipeName)
+
+def cb_copy():
+  from_name=wCopyFrom.get()
+  from_dirpath=dirpath+"/"+from_name
+  to_name=wCopyTo.get()
+  to_dirpath=dirpath+"/"+to_name
+  if os.path.exists(from_dirpath) == False:
+    rospy.logerr("Copy folder does not exist RecipeName='%s'", from_name)
+  elif os.path.exists(to_dirpath) == True:
+    rospy.logerr("Copy destination folder exists RecipeName='%s'", to_name)
+  else:
+    rospy.logerr("copy RecipeName from='%s' to='%s'", from_name, to_name)
+    commands.getoutput("cp -a "+dirpath+"/"+from_name+" "+dirpath+"/"+to_name)
+
 def cb_new(msg):
   global Param,RecipeName
 #  if wRecipe is None: return
@@ -153,6 +178,9 @@ def cb_open_dir(name):
       cb_edit(msg)
     elif name == 'Delete':
       cb_delete(msg)
+    elif name == 'CopySelect':
+      cb_copy_from(msg)
+
 
 def cb_save_as(name):
   global RecipeName,msgBox,msgBoxWait
@@ -213,9 +241,7 @@ except Exception as e:
 dictlib.merge(Config,parse_argv(sys.argv))
 
 dirpath=Config["dump_prefix"]
-#thispath=commands.getoutput("rospack find rtk_tools")
-#  dirpath=thispath+Config["recipe_d"]
-#dirpath=const.RECIPE_DIR
+thispath=commands.getoutput("rospack find rtk_tools")
 
 ####sub pub
 rospy.Subscriber('/wpc/Y0',Bool,cb_ret_x0)
@@ -244,12 +270,28 @@ frame=tk.Frame(root,bd=2,background=bgcolor)
 frame.pack(fill='x',anchor='n',expand=1)
 
 ####ICONS####
+iconpath=thispath+"/icon/"
+openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
+
 #tk.Button(root,text='open',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Load')).pack(side='left',fill='y',padx=(0,5))
 #tk.Button(root,text='copy',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_save_as,'SaveAs')).pack(side='left',fill='y',padx=(0,5))
 tk.Button(root,text='edit',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Edit')).pack(side='left',fill='y',padx=(0,5))
 tk.Button(root,text='delete',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Delete')).pack(side='left',fill='y',padx=(0,5))
 tk.Button(root,text='new',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_save_as,'New')).pack(side='left',fill='y',padx=(0,5))
 tk.Button(root,text='default',bd=0,background=bgcolor,highlightthickness=0,command=cb_default_recipe).pack(side='left',fill='y',padx=(0,5))
+
+tk.Button(root,text='copy',bd=0,background=bgcolor,highlightthickness=0,command=cb_copy).pack(side='left',fill='y',padx=(0,5))
+wlabel=tk.Label(root,text='Copy From:',font=font,foreground=lbcolor[0],background=lbcolor[1])
+wlabel.pack(side='left',fill='y',anchor='e',padx=(0,5))
+wCopyFrom=tk.Entry(root,font=font,width=20)
+wCopyFrom.pack(side='left',fill='y')
+wCopyFrom.insert(0,"")
+tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'CopySelect')).pack(side='left',fill='y',padx=(0,5))
+wlabel=tk.Label(root,text='Copy To:',font=font,foreground=lbcolor[0],background=lbcolor[1])
+wlabel.pack(side='left',fill='y',anchor='e',padx=(0,5))
+wCopyTo=tk.Entry(root,font=font,width=20)
+wCopyTo.pack(side='left',fill='y')
+wCopyTo.insert(0,"")
 
 while not rospy.is_shutdown():
 #  timeout.update()
