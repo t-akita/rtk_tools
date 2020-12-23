@@ -264,12 +264,17 @@ def cb_display(n):
   global Displays
   item=Displays[n]
   widget=item["tag"]
+  val=item["label"]
   try:
-    val=str(rospy.get_param(item["name"]))
-    if val!=widget["text"]:
-      widget.configure(text=val)
+    val_name=str(rospy.get_param(item["name"]))
+    if val_name == "":
+      val_name='---'
+    val+=val_name
   except Exception:
-    print "cb_display::get param failed",item["name"]
+#    print "cb_display::get param failed",item["name"]
+    val+='---'
+  if val!=widget["text"]:
+    widget.configure(text=val)
   n=n+1
   if n>=len(Displays): n=0
   timeout.set(functools.partial(cb_display,n),0.5)
