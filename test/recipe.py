@@ -271,5 +271,9 @@ wCopyTo.insert(0,"")
 
 while not rospy.is_shutdown():
 #  timeout.update()
-  root.update()
+  try:
+    root.update()
+  except Exception as e:
+    print "recipe update exception",e.args
+    sys.exit(0)
   time.sleep(1)
