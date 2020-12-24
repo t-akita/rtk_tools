@@ -69,31 +69,33 @@ def cb_edit(msg):
   pub_edit.publish(RecipeName)
 
 def cb_ret_x0(result):
-  if result==True:
+  if result.data:
     rospy.logerr("X0 OK")
   else:
     rospy.logerr("X0 NG")
 
 def cb_ret_load(result):
-  if result==True:
+  if result.data:
+    rospy.logerr("Recipe load X0")
     pub_x0.publish(False)
   else:
     rospy.logerr("Recipe load error")
 
 def cb_ret_save(result):
-  if result==True:
+  if result.data:
     rospy.logerr("Recipe save ok")
   else:
     rospy.logerr("Recipe save error")
 
 def cb_ret_edit(result):
-  if result==True:
+  if result.data:
+    rospy.logerr("Recipe edit X0")
     pub_x0.publish(False)
   else:
     rospy.logerr("Recipe edit error")
 
 def cb_ret_delete(result):
-  if result==True:
+  if result.data:
     rospy.logerr("Recipe delete ok")
   else:
     rospy.logerr("Recipe delete error")
