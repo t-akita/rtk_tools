@@ -58,6 +58,7 @@ Param={
 Launches=[]
 Indicates=[]
 Displays=[]
+Buttons=[]
 RecipeName=''
 
 ####dialog box control########
@@ -279,6 +280,29 @@ def cb_display(n):
   if n>=len(Displays): n=0
   timeout.set(functools.partial(cb_display,n),0.5)
 
+####Button############
+def cb_button(n):
+  global Buttons
+  item=Buttons[n]
+  w=item["button"]
+  f=True
+  if item["confirm"]:
+    msgBox=tk.Tk()
+    msgBox.title("Confirm")
+    msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
+    msg=item["message"]
+    try:
+      f=tkMessageBox.askyesnocancel("Confirm",msg,parent=msgBox)
+      rospy.loginfo("Button='%s' topic=%d",item["label"], f)
+      item["pub"].publish(f)
+    except Exception as e:
+      print "Button cancel:",item["label"]
+    msgBox.destroy()
+  else:
+    rospy.loginfo("Button='%s' topic=1",item["label"])
+    item["pub"].publish(True)
+    
+
 ####Message box
 mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
 ebox=dashLog("+0+50",90,"#CC0000","#FFFFFF")
@@ -418,6 +442,19 @@ for key in ckeys:
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
     item["tag"]=wlabel
     Displays.append(item)
+  elif key.startswith('butt'):
+    item=Config[key]
+    n=len(Buttons)
+    wbtn=tk.Button(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor,bd=0,highlightthickness=0,command=functools.partial(cb_button,n))
+    wbtn.pack(side='right',fill='y',anchor='w',padx=(0,10))
+    item["button"]=wbtn
+    item["state"]=0
+    item["pub"]=rospy.Publisher(item["topic"],Bool,queue_size=1)
+    if item["enable"]:
+      item["button"]['state']=tk.NORMAL
+    else:
+      item["button"]['state']=tk.DISABLED
+    Buttons.append(item)
 
 if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
 
