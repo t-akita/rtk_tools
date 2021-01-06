@@ -145,15 +145,18 @@ def cb_open_dir(n):
   name=Buttons[n]["name"]
   ret=askopendirname(parent=root,title=name,initialdir=dirpath,initialfile="",okbuttontext=name)
   if ret != "":
-    dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
-    if dir != "":
-      data=dir.replace("/","")
-      recipe=data.split(':')
-      func_ret=set_recipe(recipe[0],n)
-      if name == 'CopySelect':
-        cb_copy_from()
+    abs_path=os.path.abspath(Config["dump_prefix"])
+    if ret.startswith(abs_path):
+      dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
+      recipe=dir.split('/')
+      if (len(recipe) == 2) and (recipe[0] == ""):
+        func_ret=set_recipe(recipe[1],n)
+        if name == 'CopySelect':
+          cb_copy_from()
+      else:
+        Massage=name+" Wrong selection folder"
     else:
-      Massage=name+" RecipeName Empty"
+      Massage=name+" Wrong selection folder"
   return func_ret
 
 def cb_save_as(n):
@@ -162,11 +165,9 @@ def cb_save_as(n):
   name=Buttons[n]["name"]
   ret=asksaveasfilename(parent=root,title=name,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="Ok")
   if ret != "":
-    dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
-    if dir != "":
-      data=dir.replace("/","")
-      recipe=data.split(':')
-      func_ret=set_recipe(recipe[0],n)
+    recipe=ret.split('/')
+    if recipe[-1] != "":
+      func_ret=set_recipe(recipe[-1],n)
     else:
       Massage=name+" RecipeName Empty"
   return func_ret
