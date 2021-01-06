@@ -14,6 +14,7 @@ from std_msgs.msg import Bool
 from std_msgs.msg import String
 
 import Tkinter as tk
+import tkMessageBox
 import ttk
 from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
@@ -43,6 +44,7 @@ Buttons=[]
 CurrentItem={}
 Publishs={}
 Entrys={}
+Messages={"ok":"Finished", "ng":"failed", "timeout":"no reply"}
 
 ####recipe manager############
 def cb_publish_recipe(event):
@@ -57,7 +59,9 @@ def set_publish_recipe():
   CurrentItem["pub"].publish(RecipeName)
 
 def set_recipe(name,n):
-  global CurrentItem,RecipeName
+  global CurrentItem,RecipeName,Massage
+  func_ret=True
+  msg_type=""
   RecipeName=name
   CurrentItem=Buttons[n]
   if "pub" in CurrentItem:
@@ -74,68 +78,121 @@ def set_recipe(name,n):
               result=rospy.wait_for_message('/wpc/Y0',Bool,timeout=Config["sub_timeout"])
               if result.data:
                 rospy.logerr("%s RecipeName='%s' X0 ok", CurrentItem["name"], RecipeName)
+                msg_type="ok"
               else:
+                func_ret=False
+                msg_type="ng"
                 rospy.logerr("%s RecipeName='%s' X0 error", CurrentItem["name"], RecipeName)
+            except rospy.ROSInterruptException as e:
+              func_ret=False
             except rospy.ROSException as e:
+              func_ret=False
+              msg_type="timeout"
               rospy.logerr("%s RecipeName='%s' X0 timeout", CurrentItem["name"], RecipeName)
+          else:
+            msg_type="ok"
         else:
+          func_ret=False
+          msg_type="ng"
           rospy.logerr("%s RecipeName='%s' error", CurrentItem["name"], RecipeName)
+      except rospy.ROSInterruptException as e:
+        func_ret=False
       except rospy.ROSException as e:
+        func_ret=False
+        msg_type="timeout"
         rospy.logerr("%s RecipeName='%s' timeout", CurrentItem["name"], RecipeName)
     else:
       set_publish_recipe()
+      msg_type="ok"
+  if msg_type in Messages:
+    msg=""
+    if CurrentItem["name"] != 'Default':
+      msg="RecipeName:"+RecipeName+"\n"
+    Massage=msg+CurrentItem["name"]+" "+Messages[msg_type]
+  return func_ret
 
 def cb_copy_from():
   Entrys["CopyFrom"].delete(0,tk.END)
   Entrys["CopyFrom"].insert(0,RecipeName)
 
 def cb_copy(n):
+  global Massage
+  func_ret=False
   from_name=Entrys["CopyFrom"].get()
   from_dirpath=dirpath+"/"+from_name
   to_name=Entrys["CopyTo"].get()
   to_dirpath=dirpath+"/"+to_name
-  if os.path.exists(from_dirpath) == False:
+  if from_name == "":
+    Massage="Copy RecipeName Empty"
+  elif to_name == "":
+    Massage="Copy destination RecipeName Empty"
+  elif os.path.exists(from_dirpath) == False:
+    Massage="RecipeName:"+from_name+"\n"+"Copy folder does not exist"
     rospy.logerr("Copy folder does not exist RecipeName='%s'", from_name)
   elif os.path.exists(to_dirpath) == True:
-    rospy.logerr("Copy destination folder exists RecipeName='%s'", to_name)
+    Massage="RecipeName:"+to_name+"\n"+"Copy destination folder exist"
+    rospy.logerr("Copy destination folder exist RecipeName='%s'", to_name)
   else:
-    set_recipe(to_name,n)
+    func_ret=set_recipe(to_name,n)
     rospy.logerr("copy RecipeName from='%s' to='%s'", from_name, to_name)
     commands.getoutput("cp -a "+dirpath+"/"+from_name+" "+dirpath+"/"+to_name)
+    Massage=CurrentItem["name"]+" "+Messages["ok"]+"\n"+"From:"+from_name+"\n"+"To:"+to_name
+  return func_ret
 
 def cb_open_dir(n):
+  global Massage
+  func_ret=False
   name=Buttons[n]["name"]
   ret=askopendirname(parent=root,title=name,initialdir=dirpath,initialfile="",okbuttontext=name)
-  dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
-  if dir != "":
-    data=dir.replace("/","")
-    recipe=data.split(':')
-    set_recipe(recipe[0],n)
-    if name == 'CopySelect':
-      cb_copy_from()
+  if ret != "":
+    dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
+    if dir != "":
+      data=dir.replace("/","")
+      recipe=data.split(':')
+      func_ret=set_recipe(recipe[0],n)
+      if name == 'CopySelect':
+        cb_copy_from()
+    else:
+      Massage=name+" RecipeName Empty"
+  return func_ret
 
 def cb_save_as(n):
+  global Massage
+  func_ret=False
   name=Buttons[n]["name"]
   ret=asksaveasfilename(parent=root,title=name,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="Ok")
-  dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
-  if dir != "":
-    data=dir.replace("/","")
-    recipe=data.split(':')
-    set_recipe(recipe[0],n)
+  if ret != "":
+    dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
+    if dir != "":
+      data=dir.replace("/","")
+      recipe=data.split(':')
+      func_ret=set_recipe(recipe[0],n)
+    else:
+      Massage=name+" RecipeName Empty"
+  return func_ret
 
 def cb_default_recipe(n):
-  set_recipe('',n)
+  func_ret=set_recipe('',n)
+  return func_ret
 
 def cb_button(n):
+  global Massage
+  Massage=""
+  result=False
   func=Buttons[n]["func"]
   if func == 'open':
-    cb_open_dir(n)
+    result=cb_open_dir(n)
   elif func == 'save':
-    cb_save_as(n)
+    result=cb_save_as(n)
   elif func == 'default':
-    cb_default_recipe(n)
+    result=cb_default_recipe(n)
   elif func == 'copy':
-    cb_copy(n)
+    result=cb_copy(n)
+  if len(Massage)>0:
+    if result:
+      f=tkMessageBox.showinfo("Notification",Massage,parent=root)
+    else:
+      f=tkMessageBox.showerror("Warning",Massage,parent=root)
 
 ################
 def parse_argv(argv):
