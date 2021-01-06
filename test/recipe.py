@@ -33,163 +33,109 @@ Config={
     "ok": ("#000000","#CCCCCC"),
     "ng": ("#FF0000","#CCCCCC")
   },
-  "icon":{
-    "open":"open.png",
-  },
   "format":'{:.3g}',
-  "delay": 1
+  "delay": 1,
+  "pub_delay": 0.1,
+  "sub_timeout": 10.0
 }
 
+Buttons=[]
+CurrentItem={}
+Publishs={}
+Entrys={}
+
 ####recipe manager############
-def cb_load(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
-#  if os.system("ls "+dirpath+"/"+RecipeName)==0:
-#    set_param_sync("/dashboard",Param)
-#    commands.getoutput("rm "+linkpath)
-#    commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-#    commands.getoutput("rosparam load "+linkpath+"/param.yaml")
-#    if len(recipe)>1:
-#      commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
-#    pub_Y3.publish(mTrue)
-#  else:
-#    pub_E3.publish(mFalse)
+def cb_publish_recipe(event):
+  set_publish_recipe()
 
-def cb_edit(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  rospy.logerr("edit RecipeName='%s'", RecipeName)
-  pub_edit.publish(RecipeName)
+def cb_publish_x0(event):
+  rospy.logerr("%s RecipeName='%s' X0 send", CurrentItem["name"], RecipeName)
+  pub_x0.publish(False)
 
-def cb_ret_x0(result):
-  if result.data:
-    rospy.logerr("X0 OK")
-  else:
-    rospy.logerr("X0 NG")
+def set_publish_recipe():
+  rospy.logerr("%s RecipeName='%s' send", CurrentItem["name"], RecipeName)
+  CurrentItem["pub"].publish(RecipeName)
 
-def cb_ret_load(result):
-  if result.data:
-    rospy.logerr("Recipe load X0")
-    pub_x0.publish(False)
-  else:
-    rospy.logerr("Recipe load error")
+def set_recipe(name,n):
+  global CurrentItem,RecipeName
+  RecipeName=name
+  CurrentItem=Buttons[n]
+  if "pub" in CurrentItem:
+    rospy.logerr("%s RecipeName='%s' start", CurrentItem["name"], RecipeName)
+    if "s_topic" in CurrentItem:
+      rospy.Timer(rospy.Duration(Config["pub_delay"]), cb_publish_recipe, True)
+      try:
+        result=rospy.wait_for_message(CurrentItem["s_topic"],Bool,timeout=Config["sub_timeout"])
+        if result.data:
+          rospy.logerr("%s RecipeName='%s' ok", CurrentItem["name"], RecipeName)
+          if "p_next" in CurrentItem:
+            rospy.Timer(rospy.Duration(Config["pub_delay"]), cb_publish_x0, True)
+            try:
+              result=rospy.wait_for_message('/wpc/Y0',Bool,timeout=Config["sub_timeout"])
+              if result.data:
+                rospy.logerr("%s RecipeName='%s' X0 ok", CurrentItem["name"], RecipeName)
+              else:
+                rospy.logerr("%s RecipeName='%s' X0 error", CurrentItem["name"], RecipeName)
+            except rospy.ROSException as e:
+              rospy.logerr("%s RecipeName='%s' X0 timeout", CurrentItem["name"], RecipeName)
+        else:
+          rospy.logerr("%s RecipeName='%s' error", CurrentItem["name"], RecipeName)
+      except rospy.ROSException as e:
+        rospy.logerr("%s RecipeName='%s' timeout", CurrentItem["name"], RecipeName)
+    else:
+      set_publish_recipe()
 
-def cb_ret_save(result):
-  if result.data:
-    rospy.logerr("Recipe save ok")
-  else:
-    rospy.logerr("Recipe save error")
+def cb_copy_from():
+  Entrys["CopyFrom"].delete(0,tk.END)
+  Entrys["CopyFrom"].insert(0,RecipeName)
 
-def cb_ret_edit(result):
-  if result.data:
-    rospy.logerr("Recipe edit X0")
-    pub_x0.publish(False)
-  else:
-    rospy.logerr("Recipe edit error")
-
-def cb_ret_delete(result):
-  if result.data:
-    rospy.logerr("Recipe delete ok")
-  else:
-    rospy.logerr("Recipe delete error")
-
-def cb_edit(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  rospy.logerr("edit RecipeName='%s'", RecipeName)
-  pub_edit.publish(RecipeName)
-
-def cb_delete(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  rospy.logerr("delete RecipeName='%s'", RecipeName)
-  pub_delete.publish(RecipeName)
-
-def cb_copy_from(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  wCopyFrom.delete(0,tk.END)
-  wCopyFrom.insert(0,RecipeName)
-
-def cb_copy():
-  from_name=wCopyFrom.get()
+def cb_copy(n):
+  from_name=Entrys["CopyFrom"].get()
   from_dirpath=dirpath+"/"+from_name
-  to_name=wCopyTo.get()
+  to_name=Entrys["CopyTo"].get()
   to_dirpath=dirpath+"/"+to_name
   if os.path.exists(from_dirpath) == False:
     rospy.logerr("Copy folder does not exist RecipeName='%s'", from_name)
   elif os.path.exists(to_dirpath) == True:
     rospy.logerr("Copy destination folder exists RecipeName='%s'", to_name)
   else:
+    set_recipe(to_name,n)
     rospy.logerr("copy RecipeName from='%s' to='%s'", from_name, to_name)
     commands.getoutput("cp -a "+dirpath+"/"+from_name+" "+dirpath+"/"+to_name)
 
-def cb_new(msg):
-  global Param,RecipeName
-#  if wRecipe is None: return
-#  Param["recipe"]=msg.data
-  recipe=msg.data.split(':')
-  RecipeName=recipe[0]
-  rospy.logerr("new RecipeName='%s'", RecipeName)
-  pub_save.publish(RecipeName)
-
-def cb_open_dir(name):
-#  rospy.logerr("recipe_d='%s'", dirpath)
-#  if wRecipe is None: return
+def cb_open_dir(n):
+  name=Buttons[n]["name"]
   ret=askopendirname(parent=root,title=name,initialdir=dirpath,initialfile="",okbuttontext=name)
   dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
   if dir != "":
-    msg=String()
-    msg.data=dir.replace("/","")
-    if name == 'Load':
-      cb_load(msg)
-    elif name == 'Edit':
-      cb_edit(msg)
-    elif name == 'Delete':
-      cb_delete(msg)
-    elif name == 'CopySelect':
-      cb_copy_from(msg)
+    data=dir.replace("/","")
+    recipe=data.split(':')
+    set_recipe(recipe[0],n)
+    if name == 'CopySelect':
+      cb_copy_from()
 
-
-def cb_save_as(name):
-  global RecipeName
-#  if wRecipe is None: return
-  ret=asksaveasfilename(parent=root,title="save",defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="ok")
+def cb_save_as(n):
+  name=Buttons[n]["name"]
+  ret=asksaveasfilename(parent=root,title=name,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")],okbuttontext="Ok")
   dir=re.sub(r".*"+Config["dump_prefix"],"",ret)
   if dir != "":
-    if name == 'SaveAs':
-      recipe=dir.replace("/","")
-      commands.getoutput("cp -a "+dirpath+"/"+RecipeName+" "+dirpath+"/"+recipe)
-      RecipeName=recipe
-      Param["recipe"]=RecipeName
-      rospy.set_param("/dashboard",Param)
-      wRecipe.delete(0,tk.END)
-      wRecipe.insert(0,Param["recipe"])
-      commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-    elif name == 'New':
-      msg=String()
-      msg.data=dir.replace("/","")
-      cb_new(msg)
+    data=dir.replace("/","")
+    recipe=data.split(':')
+    set_recipe(recipe[0],n)
 
-def cb_default_recipe():
-  rospy.logerr("default Recipe='%s'", '')
-  pub_load.publish('')
+def cb_default_recipe(n):
+  set_recipe('',n)
+
+def cb_button(n):
+  func=Buttons[n]["func"]
+  if func == 'open':
+    cb_open_dir(n)
+  elif func == 'save':
+    cb_save_as(n)
+  elif func == 'default':
+    cb_default_recipe(n)
+  elif func == 'copy':
+    cb_copy(n)
 
 ################
 def parse_argv(argv):
@@ -221,11 +167,6 @@ dirpath=Config["dump_prefix"]
 thispath=commands.getoutput("rospack find rtk_tools")
 
 ####sub pub
-rospy.Subscriber('/wpc/Y0',Bool,cb_ret_x0)
-rospy.Subscriber('/recipe/loaded',Bool,cb_ret_load)
-rospy.Subscriber('/recipe/saved',Bool,cb_ret_save)
-rospy.Subscriber('/recipe/edited',Bool,cb_ret_edit)
-rospy.Subscriber('/recipe/deleted',Bool,cb_ret_delete)
 pub_x0=rospy.Publisher('/wpc/X0',Bool,queue_size=1)
 pub_load=rospy.Publisher('/recipe/load',String,queue_size=1)
 pub_save=rospy.Publisher('/recipe/save',String,queue_size=1)
@@ -242,34 +183,48 @@ ngcolor=Config["color"]["ng"]
 
 root=tk.Tk()
 root.title("Recipe")
-root.geometry(str(Config["width"])+"x100+1250"+str(Config["altitude"]))
+root.geometry(str(Config["width"])+"x30+1250"+str(Config["altitude"]))
 root.attributes("-topmost", True)
 frame=tk.Frame(root,bd=2,background=bgcolor)
 frame.pack(fill='x',anchor='n',expand=1)
 
 ####ICONS####
 iconpath=thispath+"/icon/"
-openicon=tk.PhotoImage(file=iconpath+Config["icon"]["open"])
 
-#tk.Button(root,text='open',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Load')).pack(side='left',fill='y',padx=(0,5))
-#tk.Button(root,text='copy',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_save_as,'SaveAs')).pack(side='left',fill='y',padx=(0,5))
-tk.Button(root,text='edit',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Edit')).pack(side='left',fill='y',padx=(0,5))
-tk.Button(root,text='delete',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'Delete')).pack(side='left',fill='y',padx=(0,5))
-tk.Button(root,text='new',bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_save_as,'New')).pack(side='left',fill='y',padx=(0,5))
-tk.Button(root,text='default',bd=0,background=bgcolor,highlightthickness=0,command=cb_default_recipe).pack(side='left',fill='y',padx=(0,5))
-
-tk.Button(root,text='copy',bd=0,background=bgcolor,highlightthickness=0,command=cb_copy).pack(side='left',fill='y',padx=(0,5))
-wlabel=tk.Label(root,text='Copy From:',font=font,foreground=lbcolor[0],background=lbcolor[1])
-wlabel.pack(side='left',fill='y',anchor='e',padx=(0,5))
-wCopyFrom=tk.Entry(root,font=font,width=20)
-wCopyFrom.pack(side='left',fill='y')
-wCopyFrom.insert(0,"")
-tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_open_dir,'CopySelect')).pack(side='left',fill='y',padx=(0,5))
-wlabel=tk.Label(root,text='Copy To:',font=font,foreground=lbcolor[0],background=lbcolor[1])
-wlabel.pack(side='left',fill='y',anchor='e',padx=(0,5))
-wCopyTo=tk.Entry(root,font=font,width=20)
-wCopyTo.pack(side='left',fill='y')
-wCopyTo.insert(0,"")
+# p_topic topic_type is String type and Recipe Name only
+# p_next  publishe topic '/wpc/X0'
+# s_topic topic_type is Bool and False only
+f=open(Config["dump_conf"],'r')
+lines=f.readlines()
+for n,line in enumerate(lines):
+  try:
+    prop=eval("{"+line+"}")
+  except:
+    continue
+  if "class" not in prop: continue
+  if prop["class"] == 'Button':
+    item={}
+    n=len(Buttons)
+    item=prop
+    if "p_topic" in prop:
+      if prop["p_topic"] not in Publishs:
+        Publishs[prop["p_topic"]]=rospy.Publisher(prop["p_topic"],String,queue_size=1)
+      item["pub"]=Publishs[prop["p_topic"]]
+    if "icon" in prop:
+      icon=tk.PhotoImage(file=iconpath+prop["icon"])
+      item["button"]=tk.Button(root,image=icon,bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_button,n)).pack(side='left',fill='y',padx=(0,5))
+    else:
+      item["button"]=tk.Button(root,text=prop["name"],bd=0,background=bgcolor,highlightthickness=0,command=functools.partial(cb_button,n)).pack(side='left',fill='y',padx=(0,5))
+    print "recipe item ",n,item
+    Buttons.append(item)
+  elif prop["class"] == 'Label':
+    wlabel=tk.Label(root,text=prop["name"]+':',font=font,foreground=lbcolor[0],background=lbcolor[1])
+    wlabel.pack(side='left',fill='y',anchor='e',padx=(0,5))
+  elif prop["class"] == 'Entry':
+    Entrys[prop["name"]]=tk.Entry(root,font=font,width=20)
+    Entrys[prop["name"]].pack(side='left',fill='y')
+    Entrys[prop["name"]].insert(0,"")
+f.close()
 
 while not rospy.is_shutdown():
 #  timeout.update()
