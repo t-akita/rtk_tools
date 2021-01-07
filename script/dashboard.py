@@ -293,14 +293,16 @@ def cb_button(n):
     msg=item["message"]
     try:
       f=tkMessageBox.askyesnocancel("Confirm",msg,parent=msgBox)
-      rospy.loginfo("Button='%s' topic=%d",item["label"], f)
-      item["pub"].publish(f)
+      pub_msg=Bool()
+      if f: pub_msg.data=mTrue
+      rospy.loginfo("Button='%s' topic=%d",item["label"], pub_msg.data)
+      item["pub"].publish(pub_msg)
     except Exception as e:
       print "Button cancel:",item["label"]
     msgBox.destroy()
   else:
     rospy.loginfo("Button='%s' topic=1",item["label"])
-    item["pub"].publish(True)
+    item["pub"].publish(mTrue)
     
 
 ####Message box

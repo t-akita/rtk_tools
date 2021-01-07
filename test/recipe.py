@@ -52,11 +52,13 @@ def cb_publish_recipe(event):
 
 def cb_publish_x0(event):
   rospy.logerr("%s RecipeName='%s' X0 send", CurrentItem["name"], RecipeName)
-  pub_x0.publish(False)
+  pub_x0.publish(mFalse)
 
 def set_publish_recipe():
   rospy.logerr("%s RecipeName='%s' send", CurrentItem["name"], RecipeName)
-  CurrentItem["pub"].publish(RecipeName)
+  pub_msg=String()
+  pub_msg.data=RecipeName
+  CurrentItem["pub"].publish(pub_msg)
 
 def set_recipe(name,n):
   global CurrentItem,RecipeName,Massage
@@ -224,12 +226,13 @@ dictlib.merge(Config,parse_argv(sys.argv))
 dirpath=Config["dump_prefix"]
 thispath=commands.getoutput("rospack find rtk_tools")
 
+####Bools
+mTrue=Bool()
+mTrue.data=True
+mFalse=Bool()
+
 ####sub pub
 pub_x0=rospy.Publisher('/wpc/X0',Bool,queue_size=1)
-pub_load=rospy.Publisher('/recipe/load',String,queue_size=1)
-pub_save=rospy.Publisher('/recipe/save',String,queue_size=1)
-pub_edit=rospy.Publisher('/recipe/edit',String,queue_size=1)
-pub_delete=rospy.Publisher('/recipe/delete',String,queue_size=1)
 
 ####Layout####
 rows=int(Config["rows"])
