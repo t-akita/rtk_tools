@@ -243,6 +243,8 @@ root=tk.Tk()
 root.title("Recipe")
 root.geometry(str(Config["width"])+"x30+1250"+str(Config["altitude"]))
 root.attributes("-topmost", True)
+root.resizable(0,0)
+root.protocol('WM_DELETE_WINDOW', (lambda: 'pass')())
 frame=tk.Frame(root,bd=2,background=bgcolor)
 frame.pack(fill='x',anchor='n',expand=1)
 
