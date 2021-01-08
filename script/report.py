@@ -13,10 +13,10 @@ import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 
-import timeout
 import Tkinter as tk
 import ttk
 from rtk_tools import dictlib
+from rtk_tools import timeout
 
 rospy.init_node("report",anonymous=True)
 Config={

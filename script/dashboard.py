@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+ 
 import numpy as np
 import sys
 import os
@@ -10,21 +10,20 @@ import commands
 import subprocess
 import functools
 import re
-
+ 
 import roslib
 import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
-
+ 
 import Tkinter as tk
-import tkMessageBox
-#import tkFileDialog as filedialog
+import pymsgbox
 from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
 from rtk_tools import dictlib
 from dashlog import dashLog
-import timeout
-
+from rtk_tools import timeout
+ 
 Config={
   "confirm":"Stop anyway",
   "autoclose":10,
@@ -60,26 +59,17 @@ Indicates=[]
 Displays=[]
 Buttons=[]
 RecipeName=''
-
+ 
 ####dialog box control########
 msgBox=None
 msgBoxWait=None
-def cb_autoclose():
-  global msgBox,msgBoxWait
-  if msgBoxWait is not None: msgBox.destroy()
-  msgBoxWait=None
+def cb_lift():
+  if msgBox is not None:
+    for k in msgBox.children:
+        msgBox.children[k].lift()
+  msgBoxWait=msgBox.after(500,cb_lift)
+
 ####recipe manager############
-def set_param_verify(name,org,dat):
-  while True:
-    ver=rospy.get_param(name)
-    if isinstance(dat,dict):
-      dav=copy.deepcopy(dat)
-      dictlib.intersect(dav,ver)
-    else:
-      dav=ver
-    if dav==dat: return
-    rospy.sleep(0.1)
-  
 def set_param_sync(name,dat):
   for k in dat:
     org=rospy.get_param(name+'/'+k)
@@ -88,18 +78,12 @@ def set_param_sync(name,dat):
     else:
       org=dat[k]
     rospy.set_param(name+'/'+k,org)
-#    set_param_verify(name+'/'+k,org,dat[k])
-
-def load_param(path):
-  f=open(path);
-  y=yaml.load(f)
-  f.close()
-  set_param_sync("",y)
 
 def cb_wRecipe(rc):
   if wRecipe is None: return
   wRecipe.delete(0,tk.END)
   wRecipe.insert(0,rc)
+
 def cb_load(msg):
   global Param,RecipeName
   if wRecipe is None: return
@@ -122,11 +106,10 @@ def cb_open_dir():
   global msgBox,msgBoxWait
   if wRecipe is None: return
   if msgBoxWait is not None: return
-  msgBox=tk.Tk()
+  msgBox=tk.Toplevel()
   msgBox.title("Load Recipe")
-  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
+  msgBoxWait=msgBox.after(500,cb_lift)
   ret=askopendirname(parent=msgBox,initialdir=dirpath,initialfile="")
-  if msgBoxWait is None: return  #returned by autoclose
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
@@ -135,16 +118,15 @@ def cb_open_dir():
     msg=String()
     msg.data=dir.replace("/","")
     cb_load(msg)
-
+ 
 def cb_save_as():
   global RecipeName,msgBox,msgBoxWait
   if wRecipe is None: return
   if msgBoxWait is not None: return
-  msgBox=tk.Tk()
+  msgBox=tk.Toplevel()
   msgBox.title("Save Recipe as")
-  msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
+  msgBoxWait=msgBox.after(500,cb_lift)
   ret=asksaveasfilename(parent=msgBox,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
-  if msgBoxWait is None: return  #returned by autoclose
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
@@ -158,7 +140,7 @@ def cb_save_as():
     wRecipe.delete(0,tk.END)
     wRecipe.insert(0,Param["recipe"])
     commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-
+ 
 ####launch manager############
 def cb_run(n):
   global Launches,msgBox,msgBoxWait
@@ -178,7 +160,7 @@ def cb_run(n):
     item["button"]["image"]=stopicon
     item["process"]=proc
     item["state"]=1
-    timeout.set(functools.partial(cb_runstat,(n,2)),3)
+    timeout.set(functools.partial(cb_runstat,n),3)
     if "pre" in item:
       print "dash pre",item["pre"]
       subprocess.Popen(item["pre"].split())
@@ -186,34 +168,39 @@ def cb_run(n):
     if "confirm" in item:
       if item["confirm"]:
         w=item["tag"]
-        msgBox=tk.Tk()
-        msgBox.title("Confirm")
-        msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
-        msgBoxWait=msgBox.after(Config["autoclose"]*1000,cb_autoclose)
-        msg=Config["confirm"]
+        msgBox=tk.Toplevel()
+        msgBox.geometry("250x100+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()))
+        msgBoxWait=msgBox.after(500,cb_lift)
+        msg=item["label"]+Config["confirm"]
         if "message" in Config:
           if "halt" in Config["message"]: msg=Config["message"]["halt"]
           elif "launch" in Config["message"]: msg=Config["message"]["launch"]
         elif "label" in Config:
           if "confirm" in Config["label"]: msg=Config["label"]["confirm"]
-        f=tkMessageBox.askyesno("Confirm",msg,parent=msgBox)
-        if msgBoxWait is None: return
+        msg=item["label"]+msg
+        f=pymsgbox.confirm(root=msgBox,text=msg,buttons=['OK','CANCEL'])
         msgBox.after_cancel(msgBoxWait)
         msgBoxWait=None
         msgBox.destroy()
-        if f is False: return
+        if f.startswith("C"):  #Cancel
+          return
     item["process"].terminate()
     item["state"]=3
     timeout.set(functools.partial(cb_stop,n),1)
-    if "post" in item:
-      print "dash post",item["post"]
-      subprocess.Popen(item["post"].split())
-
-def cb_runstat(tpl):
+ 
+def cb_runstat(n):
   global Launches
-  item=Launches[tpl[0]]
-  item["state"]=tpl[1]
-
+  item=Launches[n]
+  if item["state"]==1:
+    item["state"]=2
+    timeout.set(functools.partial(cb_runstat,n),1)
+  elif item["state"]==2:
+    if item["process"].poll() is None:
+      timeout.set(functools.partial(cb_runstat,n),1)
+    else:
+      item["state"]=3
+      timeout.set(functools.partial(cb_stop,n),0)
+ 
 def cb_stop(n):
   global Launches
   item=Launches[n]
@@ -221,7 +208,9 @@ def cb_stop(n):
   item["tag"]["font"]=normalfont
   item["button"]["image"]=starticon
   item["state"]=0
-
+  if "post" in item:
+    subprocess.Popen(item["post"].split())
+ 
 shutdown=False
 def cb_shutdown(msg):
   global shutdown
@@ -230,11 +219,11 @@ def cb_shutdown(msg):
       item["process"].terminate()
   rospy.sleep(1)
   shutdown=True
-
+ 
 ####Redraw############
 def cb_redraw():
   timeout.set(lambda: pub_redraw.publish(mTrue),0)
-
+ 
 ####Indicator############
 def cb_indicator(n,msg):
   global Indicates
@@ -244,7 +233,7 @@ def cb_indicator(n,msg):
   else:
     if "sto" in item: timeout.clear(item["sto"])
     timeout.set(functools.partial(cb_turnoff,n),0)
-
+ 
 def cb_turnon(n):
   global Indicates
   item=Indicates[n]
@@ -252,14 +241,14 @@ def cb_turnon(n):
   item["tag"]["font"]=boldfont
   if "sto" in item: timeout.clear(item["sto"])
   item["sto"]=timeout.set(functools.partial(cb_turnoff,n),item["timeout"])
-
+ 
 def cb_turnoff(n):
   global Indicates
   item=Indicates[n]
   if "sto" in item: item.pop("sto")
   item["tag"]["foreground"]=unlitcolor
   item["tag"]["font"]=normalfont
-
+ 
 ####Display parametr############
 def cb_display(n):
   global Displays
@@ -272,39 +261,41 @@ def cb_display(n):
       val_name='---'
     val+=val_name
   except Exception:
-#    print "cb_display::get param failed",item["name"]
     val+='---'
   if val!=widget["text"]:
     widget.configure(text=val)
   n=n+1
   if n>=len(Displays): n=0
   timeout.set(functools.partial(cb_display,n),0.5)
-
+ 
 ####Button############
 def cb_button(n):
-  global Buttons
+  global Buttons,msgBox,msgBoxWait
   item=Buttons[n]
   w=item["button"]
   f=True
   if item["confirm"]:
-    msgBox=tk.Tk()
-    msgBox.title("Confirm")
-    msgBox.geometry("100x30+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+30))
+    msgBox=tk.Toplevel()
+    msgBox.geometry("250x100+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()))
+    msgBoxWait=msgBox.after(500,cb_lift)
     msg=item["message"]
-    try:
-      f=tkMessageBox.askyesnocancel("Confirm",msg,parent=msgBox)
-      pub_msg=Bool()
-      if f: pub_msg.data=True
+    f=pymsgbox.confirm(root=msgBox,text=msg,buttons=['OK','NO','CANCEL'])
+    msgBox.after_cancel(msgBoxWait)
+    msgBoxWait=None
+    msgBox.destroy()
+
+    pub_msg=Bool()
+    if f.startswith('C'): #Cancel
+      print "Button cancel:",item["label"]
+    else:
+      if f.startswith('O'): #OK
+        pub_msg.data=True
       rospy.loginfo("Button='%s' topic=%d",item["label"], pub_msg.data)
       item["pub"].publish(pub_msg)
-    except Exception as e:
-      print "Button cancel:",item["label"]
-    msgBox.destroy()
   else:
     rospy.loginfo("Button='%s' topic=1",item["label"])
-    item["pub"].publish(mTrue)
-    
-
+    item["pub"].publish(mTrue)     
+ 
 ####Message box
 mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
 ebox=dashLog("+0+50",90,"#CC0000","#FFFFFF")
@@ -346,12 +337,12 @@ try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
   print "get_param exception:",e.args
-
+ 
 ####Bools
 mTrue=Bool()
 mTrue.data=True
 mFalse=Bool()
-
+ 
 ####sub pub
 rospy.Subscriber("~load",String,cb_load)
 rospy.Subscriber("/message",String,functools.partial(cb_mbox_push,0))
@@ -361,7 +352,7 @@ pub_Y3=rospy.Publisher("~loaded",Bool,queue_size=1)
 pub_E3=rospy.Publisher("~failed",Bool,queue_size=1)
 pub_msg=rospy.Publisher("/message",String,queue_size=1)
 pub_redraw=rospy.Publisher("/request/redraw",Bool,queue_size=1)
-
+ 
 ####Layout####
 normalfont=(Config["font"]["family"],Config["font"]["size"],"normal")
 boldfont=(Config["font"]["family"],Config["font"]["size"],"bold")
@@ -370,7 +361,7 @@ litcolor=Config["color"]["lit"]
 unlitcolor=Config["color"]["unlit"]
 maskcolor=Config["color"]["mask"]
 dispattr=Config["display"];Config.pop("display")  #Patch to display
-
+ 
 root=tk.Tk()
 root.title("Dashboard")
 root.config(background=bgcolor)
@@ -378,7 +369,7 @@ root.config(bd=1)
 root.geometry(str(root.winfo_screenwidth())+"x26+0"+Config["altitude"])
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
-
+ 
 ####ICONS####
 iconpath=thispath+"/icon/"
 logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
@@ -405,7 +396,7 @@ if "recipe" in Config:
   tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save_as).pack(side='left',fill='y',padx=(0,30))
 else:
   wRecipe=None
-
+ 
 ckeys=Config.keys()
 for key in ckeys:
   if key.startswith('launch'):
@@ -424,7 +415,7 @@ for key in ckeys:
       if item["auto"]>=0:
         timeout.set(functools.partial(cb_run,n),item["auto"])
     Launches.append(item)
-
+ 
 tk.Button(root,image=redrawicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_redraw).pack(side='right',anchor='nw',padx=(0,0))
 ckeys.sort(reverse=True)
 for key in ckeys:
@@ -457,9 +448,9 @@ for key in ckeys:
     else:
       item["button"]['state']=tk.DISABLED
     Buttons.append(item)
-
+ 
 if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
-
+ 
 while not rospy.is_shutdown():
   if shutdown: break
   timeout.update()
