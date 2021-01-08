@@ -294,8 +294,17 @@ def cb_button(n):
       item["pub"].publish(pub_msg)
   else:
     rospy.loginfo("Button='%s' topic=1",item["label"])
-    item["pub"].publish(mTrue)     
- 
+    item["pub"].publish(mTrue)
+
+def cb_butt_enable(n,msg):
+  timeout.set(functools.partial(cb_button_enable,n,msg.data),0)
+
+def cb_button_enable(n,enable):
+  if enable:
+    Buttons[n]["button"]['state'] = tk.NORMAL
+  else:
+    Buttons[n]["button"]['state'] = tk.DISABLED
+
 ####Message box
 mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
 ebox=dashLog("+0+50",90,"#CC0000","#FFFFFF")
@@ -443,10 +452,13 @@ for key in ckeys:
     item["button"]=wbtn
     item["state"]=0
     item["pub"]=rospy.Publisher(item["topic"],Bool,queue_size=1)
-    if item["enable"]:
-      item["button"]['state']=tk.NORMAL
-    else:
-      item["button"]['state']=tk.DISABLED
+    if "en_topic" in item:
+      rospy.Subscriber(item["en_topic"],Bool,functools.partial(cb_butt_enable,n))
+    if "en_default" in item:
+      if item["en_default"]:
+        item["button"]['state']=tk.NORMAL
+      else:
+        item["button"]['state']=tk.DISABLED
     Buttons.append(item)
  
 if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
