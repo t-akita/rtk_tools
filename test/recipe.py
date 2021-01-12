@@ -22,18 +22,12 @@ from rtk_tools import dictlib
 from rtk_tools import timeout
 
 Config={
-  "width":800,
-  "rows":4,
-  "altitude":"+0",
+  "geom":"365x195+1210+150",
   "font":{"family":"System", "size":10},
   "color":{
-    "background": "#00FF00",
-    "label": ("#FFFFFF","#555555"),
-    "ok": ("#000000","#CCCCCC"),
-    "ng": ("#FF0000","#CCCCCC")
+    "button": "#00AAFF"
   },
   "format":'{:.3g}',
-  "delay": 1,
   "pub_delay": 0.1,
   "sub_timeout": 10.0
 }
@@ -284,22 +278,18 @@ mFalse = Bool()
 pub_x0 = rospy.Publisher('/wpc/X0',Bool, queue_size=1)
 
 ####Layout####
-rows = int(Config["rows"])
 font = (Config["font"]["family"], Config["font"]["size"], "normal")
-bgcolor = Config["color"]["background"]
-lbcolor = Config["color"]["label"]
-okcolor = Config["color"]["ok"]
-ngcolor = Config["color"]["ng"]
+btcolor = Config["color"]["button"]
 
 root = tk.Tk()
 root.title("Recipe")
-root.geometry(str(Config["width"]) + 'x30+1250' + str(Config["altitude"]))
+root.geometry(str(Config["geom"]))
 root.attributes('-topmost', True)
 root.resizable(0, 0)
 root.protocol('WM_DELETE_WINDOW', cb_do_nothing)
 
-frame = tk.Frame(root, bd=2, background=bgcolor)
-frame.pack(fill='x', anchor='n', expand=1)
+frame = tk.Frame(root, bd=2)
+frame.grid(sticky='ne'+'nw'+'s',padx=(5, 5), pady=(5, 5))
 
 ####ICONS####
 iconpath = thispath + "/icon/"
@@ -309,6 +299,7 @@ iconpath = thispath + "/icon/"
 # s_topic topic_type is Bool and False only
 f = open(Config["dump_conf"], 'r')
 lines = f.readlines()
+row_no = -1
 for n, line in enumerate(lines):
   try:
     prop = eval("{"+line+"}")
@@ -316,6 +307,13 @@ for n, line in enumerate(lines):
     continue
   if "class" not in prop:
     continue
+  if "row" in prop:
+    row_no += 1
+  if row_no < 0:
+    row_no = 0
+  col_no = 0
+  if "col" in prop:
+    col_no = int(prop["col"])
   if prop["class"] == 'Button':
     item={}
     n = len(buttons)
@@ -327,25 +325,34 @@ for n, line in enumerate(lines):
       item["pub"] = pubs_tbl[prop["p_topic"]]
     if "icon" in prop:
       icon = tk.PhotoImage(file=iconpath+prop["icon"])
-      item["button"] = tk.Button(root, image=icon,
-                                 bd=0, background=bgcolor,
+      item["button"] = tk.Button(frame, image=icon,
+                                 bd=0, background=btcolor,
                                  highlightthickness=0,
                                  command=functools.partial(cb_button, n))
+      item["button"].grid(column=col_no, row=row_no,
+                          sticky='ne'+'nw'+'s',
+                          padx=(0, 5), pady=(0, 5))
     else:
-      item["button"] = tk.Button(root, text=prop["name"],
-                                 bd=0, background=bgcolor,
+      item["button"] = tk.Button(frame, text=prop["name"],
+                                 bd=0, background=btcolor,
                                  highlightthickness=0,
                                  command=functools.partial(cb_button, n))
-    item["button"].pack(side='left', fill='y', padx=(0, 5))
+      item["button"].grid(column=col_no, row=row_no,
+                          sticky='ne'+'nw'+'s',
+                          padx=(0, 5), pady=(0, 5), ipady=5)
     print "recipe item ", n, item
     buttons.append(item)
   elif prop["class"] == 'Label':
-    wlabel = tk.Label(root, text=(prop["name"]+':'),
-                      font=font, foreground=lbcolor[0], background=lbcolor[1])
-    wlabel.pack(side='left', fill='y', anchor='e', padx=(0, 5))
+    wlabel = tk.Label(frame, text=(prop["name"]+':'),
+                      font=font)
+    wlabel.grid(column=col_no, row=row_no,
+                sticky='ne'+'nw'+'s',
+                padx=(0, 5), pady=(0, 5), ipady=5)
   elif prop["class"] == 'Entry':
-    entrys[prop["name"]] = tk.Entry(root, font=font, width=20)
-    entrys[prop["name"]].pack(side='left', fill='y')
+    entrys[prop["name"]] = tk.Entry(frame, font=font, width=20)
+    entrys[prop["name"]].grid(column=col_no, row=row_no,
+                              sticky='ne'+'nw'+'s',
+                              padx=(0, 5), pady=(0, 5), ipady=5)
     entrys[prop["name"]].insert(0, '')
 f.close()
 
