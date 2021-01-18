@@ -272,6 +272,7 @@ def cb_display(n):
 ####Button############
 def cb_button(n):
   global Buttons,msgBox,msgBoxWait
+  if msgBoxWait is not None: return
   item=Buttons[n]
   w=item["button"]
   f=True
