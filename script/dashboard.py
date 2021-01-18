@@ -50,7 +50,8 @@ Config={
     "open":"open.png",
     "copy":"copy.png",
     "redraw":"pencil.png",
-  }
+  },
+  "password":"admin"
 }
 Param={
   "recipe":""
@@ -148,23 +149,41 @@ def cb_run(n):
   if msgBoxWait is not None: return
   item=Launches[n]
   if item["state"]==0:
-    if ".launch" in item["file"]:
-      cmd=["roslaunch",item["package"],item["file"]];
-    else:
-      cmd=["xterm","-e","rosrun",item["package"],item["file"]];
-    if "args" in item:
-      for k in item["args"]:
-        cmd.append(k+":="+str(item["args"][k]))
-    proc=subprocess.Popen(cmd)
-    item["tag"]["foreground"]=litcolor
-    item["tag"]["font"]=boldfont
-    item["button"]["image"]=stopicon
-    item["process"]=proc
-    item["state"]=1
-    timeout.set(functools.partial(cb_runstat,n),3)
-    if "pre" in item:
-      print "dash pre",item["pre"]
-      subprocess.Popen(item["pre"].split())
+    fg=True
+    if "pass" in item:
+      fg=False
+      w=item["tag"]
+      msgBox=tk.Toplevel()
+      msgBox.geometry("250x100+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()))
+      msgBoxWait=msgBox.after(500,cb_lift)
+      msg="Enter password"
+      enterpass=pymsgbox.password(root=msgBox,text=msg)
+      if enterpass:
+        if enterpass==Config["password"]:
+          fg=True
+        else:
+          pymsgbox.alert(root=msgBox,text="password is incorrect")
+      msgBox.after_cancel(msgBoxWait)
+      msgBoxWait=None
+      msgBox.destroy()
+    if fg:
+      if ".launch" in item["file"]:
+        cmd=["roslaunch",item["package"],item["file"]];
+      else:
+        cmd=["xterm","-e","rosrun",item["package"],item["file"]];
+      if "args" in item:
+        for k in item["args"]:
+          cmd.append(k+":="+str(item["args"][k]))
+      proc=subprocess.Popen(cmd)
+      item["tag"]["foreground"]=litcolor
+      item["tag"]["font"]=boldfont
+      item["button"]["image"]=stopicon
+      item["process"]=proc
+      item["state"]=1
+      timeout.set(functools.partial(cb_runstat,n),3)
+      if "pre" in item:
+        print "dash pre",item["pre"]
+        subprocess.Popen(item["pre"].split())
   elif item["state"]==2:
     if "confirm" in item:
       if item["confirm"]:
