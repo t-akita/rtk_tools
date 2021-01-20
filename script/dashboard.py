@@ -70,6 +70,8 @@ def cb_lift():
     for k in msgBox.children:
         msgBox.children[k].lift()
   msgBoxWait=msgBox.after(500,cb_lift)
+def cb_wait_nop():
+  msgBoxWait=msgBox.after(1000,cb_wait_nop)
 
 ####recipe manager############
 def set_param_sync(name,dat):
@@ -152,17 +154,28 @@ def cb_run(n):
     fg=True
     if "pass" in item:
       fg=False
+      alert=""
       w=item["tag"]
       msgBox=tk.Toplevel()
-      msgBox.geometry("250x100+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()))
-      msgBoxWait=msgBox.after(500,cb_lift)
+      geom="300x130+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()+25)
+      msgBox.geometry(geom)
+      msgBoxWait=msgBox.after(1000,cb_wait_nop)
       msg="Enter password"
-      enterpass=pymsgbox.password(root=msgBox,text=msg)
-      if enterpass:
-        if enterpass==Config["password"]:
+      result=pymsgbox.password(root=msgBox,text=msg,geom=geom)
+      if result[0].startswith('O'): #OK
+        if result[1]==Config["password"]:
           fg=True
         else:
-          pymsgbox.alert(root=msgBox,text="password is incorrect")
+          alert="password is incorrect"
+      elif not result[0].startswith("C"):  #Cancel
+        alert="enter password error"
+      if alert:
+        msgBox.after_cancel(msgBoxWait)
+        msgBox.destroy()
+        msgBox=tk.Toplevel()
+        msgBox.geometry("250x100+"+str(w.winfo_rootx())+"+"+str(w.winfo_rooty()))
+        msgBoxWait=msgBox.after(500,cb_lift)
+        pymsgbox.alert(root=msgBox,text=alert)
       msgBox.after_cancel(msgBoxWait)
       msgBoxWait=None
       msgBox.destroy()
