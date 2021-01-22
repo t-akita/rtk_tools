@@ -25,24 +25,24 @@ from rtk_tools import dictlib
 from dashlog import dashLog
 from rtk_tools import timeout
  
-Config={
-  "confirm":"Stop anyway",
-  "autoclose":10,
-  "altitude":"+0",
-  "font":{"family":"System", "size":10},
-  "color":{
+Config=OrderedDict([
+  ("confirm","Stop anyway"),
+  ("autoclose",10),
+  ("altitude","+0"),
+  ("font",{"family":"System", "size":10}),
+  ("color",{
     "background": "#00FF00",
     "lit": "#FF8800",
     "unlit": "#000000",
     "mask": "#666666"
-  },
-  "display":{
+  }),
+  ("display",{
     "color":{
       "background": "#FFFF00",
       "foreground": "#0000FF"
     }
-  },
-  "icon":{
+  }),
+  ("icon",{
     "logo":"logo.png",
     "recipe":"pan.png",
     "start":"start.png",
@@ -50,9 +50,9 @@ Config={
     "open":"open.png",
     "copy":"copy.png",
     "redraw":"pencil.png",
-  },
-  "password":"admin"
-}
+  }),
+  ("password","admin")
+])
 Param={
   "recipe":""
 }
@@ -363,9 +363,10 @@ def parse_argv(argv):
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
 dictlib.merge(Config,parse_argv(sys.argv))
-key_conf=OrderedDict()
-if "dump_yamlpath" in Config:
-  yamlpath=Config["dump_yamlpath"]
+thispath=commands.getoutput("rospack find rtk_tools")
+if "load" in Config:
+  init_load=Config["load"]
+  yamlpath=thispath+"/../"+Config["load"]
   yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
       lambda loader, node: OrderedDict(loader.construct_pairs(node)))
   try:
@@ -374,19 +375,26 @@ if "dump_yamlpath" in Config:
   except:
     conf={}
   try:
-    dictlib.merge(key_conf,conf["config"]["dashboard"])
+    dictlib.merge(Config,conf["config"]["dashboard"])
   except Exception as e:
-    print "yaml marge error:",e.args
+    print "first load marge error:",e.args
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
   print "get_param exception:",e.args
-if not key_conf:
-  key_conf=Config
 
-thispath=commands.getoutput("rospack find rtk_tools")
 if "load" in Config:
-  commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
+  if init_load != Config["load"]:
+    yamlpath=thispath+"/../"+Config["load"]
+    try:
+      conf=yaml.load(file(yamlpath))
+      commands.getoutput("rosparam load "+yamlpath)
+    except:
+      conf={}
+    try:
+      dictlib.merge(Config,conf["config"]["dashboard"])
+    except Exception as e:
+      print "second load marge error:",e.args
 if "recipe" in Config:
   srcpath=re.subn(r".*?/","/",thispath[::-1],1)[0][::-1]
   dirpath=srcpath+Config["recipe"]["dir"]
@@ -421,8 +429,6 @@ litcolor=Config["color"]["lit"]
 unlitcolor=Config["color"]["unlit"]
 maskcolor=Config["color"]["mask"]
 dispattr=Config["display"];Config.pop("display")  #Patch to display
-if "display" in key_conf:
-  key_conf.pop("display")
  
 root=tk.Tk()
 root.title("Dashboard")
@@ -459,10 +465,10 @@ if "recipe" in Config:
 else:
   wRecipe=None
  
-ckeys=key_conf.keys()
+ckeys=Config.keys()
 for key in ckeys:
   if key.startswith('launch'):
-    item=key_conf[key]
+    item=Config[key]
     if "file" not in item: continue
     n=len(Launches)
     print "item",item
@@ -482,7 +488,7 @@ tk.Button(root,image=redrawicon,bd=0,background=bgcolor,highlightthickness=0,com
 #ckeys.sort(reverse=True)
 for key in ckeys:
   if key.startswith('indic'):
-    item=key_conf[key]
+    item=Config[key]
     n=len(Indicates)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
@@ -490,7 +496,7 @@ for key in ckeys:
     rospy.Subscriber(item["topic"],Bool,functools.partial(cb_indicator,n))
     Indicates.append(item)
   elif key.startswith('disp'):
-    item=key_conf[key]
+    item=Config[key]
     print "item",item
     n=len(Displays)
     wlabel=tk.Label(root,font=boldfont,background=dispattr["color"]["background"],foreground=dispattr["color"]["foreground"])
@@ -498,7 +504,7 @@ for key in ckeys:
     item["tag"]=wlabel
     Displays.append(item)
   elif key.startswith('butt'):
-    item=key_conf[key]
+    item=Config[key]
     n=len(Buttons)
     wbtn=tk.Button(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor,bd=0,highlightthickness=0,command=functools.partial(cb_button,n))
     wbtn.pack(side='right',fill='y',anchor='w',padx=(0,10))
