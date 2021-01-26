@@ -112,8 +112,9 @@ def cb_open_dir():
   if msgBoxWait is not None: return
   msgBox=tk.Toplevel()
   msgBox.title("Load Recipe")
-  msgBoxWait=msgBox.after(500,cb_lift)
-  ret=askopendirname(parent=msgBox,initialdir=dirpath,initialfile="")
+  msgBox.withdraw()
+  msgBoxWait=msgBox.after(1000,cb_wait_nop)
+  ret=askopendirname(parent=root,initialdir=dirpath,initialfile="")
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
@@ -129,8 +130,9 @@ def cb_save_as():
   if msgBoxWait is not None: return
   msgBox=tk.Toplevel()
   msgBox.title("Save Recipe as")
-  msgBoxWait=msgBox.after(500,cb_lift)
-  ret=asksaveasfilename(parent=msgBox,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
+  msgBox.withdraw()
+  msgBoxWait=msgBox.after(1000,cb_wait_nop)
+  ret=asksaveasfilename(parent=root,defaultext="",initialdir=dirpath,initialfile="",filetypes=[("Directory", "*/")])
   msgBox.after_cancel(msgBoxWait)
   msgBoxWait=None
   msgBox.destroy()
@@ -364,6 +366,7 @@ def parse_argv(argv):
 rospy.init_node("dashboard",anonymous=True)
 dictlib.merge(Config,parse_argv(sys.argv))
 thispath=commands.getoutput("rospack find rtk_tools")
+init_load=None
 if "load" in Config:
   init_load=Config["load"]
   yamlpath=thispath+"/../"+Config["load"]
@@ -436,7 +439,8 @@ root.config(background=bgcolor)
 root.config(bd=1)
 root.geometry(str(root.winfo_screenwidth())+"x26+0"+Config["altitude"])
 root.rowconfigure(0,weight=1)
-root.overrideredirect(True)
+root.attributes('-topmost', True)
+root.attributes('-type', 'splash')
  
 ####ICONS####
 iconpath=thispath+"/icon/"
