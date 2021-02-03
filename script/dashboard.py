@@ -337,9 +337,14 @@ def cb_butt_enable(n,msg):
 
 def cb_button_enable(n,enable):
   if enable:
-    Buttons[n]["button"]['state'] = tk.NORMAL
+    item["button"]['state'] = tk.NORMAL
+    item["button"]["background"]=litcolor
+    if "sto" in item: timeout.clear(item["sto"])
+    item["sto"]=timeout.set(functools.partial(cb_button_enable,n,False),item["timeout"])
   else:
-    Buttons[n]["button"]['state'] = tk.DISABLED
+    item["button"]['state'] = tk.DISABLED
+    item["button"]["background"]=maskcolor
+    if "sto" in item: item.pop("sto")
 
 ####Message box
 mbox=dashLog("+0+300",150,"#0000CC","#FFFFFF")
@@ -515,13 +520,18 @@ for key in ckeys:
     item["button"]=wbtn
     item["state"]=0
     item["pub"]=rospy.Publisher(item["topic"],Bool,queue_size=1)
-    if "en_topic" in item:
-      rospy.Subscriber(item["en_topic"],Bool,functools.partial(cb_butt_enable,n))
     if "en_default" in item:
       if item["en_default"]:
         item["button"]['state']=tk.NORMAL
       else:
         item["button"]['state']=tk.DISABLED
+    else:
+      item["button"]['state']=tk.NORMAL
+    if "en_topic" in item:
+      rospy.Subscriber(item["en_topic"],Bool,functools.partial(cb_butt_enable,n))
+      item["button"]['state']=tk.DISABLED
+      if "timeout" not in item:
+        item["timeout"]=1
     Buttons.append(item)
  
 if len(Displays)>0: timeout.set(functools.partial(cb_display,0),1)
