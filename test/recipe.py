@@ -202,11 +202,10 @@ def cb_edit_mode(msg):
     timeout.set(functools.partial(cb_button_enable,flg),0)
 
 def check_edit_mode():
-#  try:
-#    val = rospy.get_param(ROSPARAM_AUTO_MODE)
-#  except Exception:
-#    val = 0
-  val = 0
+  try:
+    val = rospy.get_param(ROSPARAM_AUTO_MODE)
+  except Exception:
+    val = 0
   ret = (val == 1)
   rospy.logerr("recipe check edit=%d", ret)
   return ret
@@ -262,8 +261,8 @@ MSG_TBL = {
   "ng": "failed",
   "timeout": "no reply"
 }
-#TOPIC_EDIT_MODE = '/recipe/saved'
-#ROSPARAM_AUTO_MODE = '/wpc/recipeNumber'
+TOPIC_EDIT_MODE = '/wpc/stat'
+ROSPARAM_AUTO_MODE = '/wpc/mode'
 massage = ''
 recipe_name = ''
 is_exec = False
@@ -358,7 +357,7 @@ f.close()
 
 if check_edit_mode():
   set_button_enable(False)
-#rospy.Subscriber(TOPIC_EDIT_MODE, Bool, cb_edit_mode)
+rospy.Subscriber(TOPIC_EDIT_MODE, Bool, cb_edit_mode)
 
 while not rospy.is_shutdown():
   timeout.update()
