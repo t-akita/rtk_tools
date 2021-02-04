@@ -29,7 +29,8 @@ Config={
   },
   "format":'{:.3g}',
   "pub_delay": 0.1,
-  "sub_timeout": 10.0
+  "sub_timeout": 10.0,
+  "stat_timeout": 1.0
 }
 
 ####recipe manager############
@@ -195,11 +196,28 @@ def cb_button(n):
 def cb_button_enable(enable):
   set_button_enable(enable)
 
-def cb_edit_mode(msg):
+def cb_button_normal():
+  global statcheck
+  statcheck = 0
+  if check_button_chenge(True):
+    set_button_enable(True)
+
+def cb_edit_stat(msg):
+  global statcheck
   flg = not msg.data
-  if (not is_exec) and (is_edit != flg):
+  if statcheck:
+    timeout.clear(statcheck)
+    statcheck = 0
+  if msg.data:
+    if "stat_timeout" in Config:
+      statcheck = timeout.set(cb_button_normal, Config["stat_timeout"])
+  if check_button_chenge(flg):
     rospy.logerr("recipe edit mode change edit=%d", msg.data)
-    timeout.set(functools.partial(cb_button_enable,flg),0)
+    timeout.set(functools.partial(cb_button_enable, flg), 0)
+
+def check_button_chenge(enable):
+  ret = ((not is_exec) and (is_enable != enable))
+  return ret
 
 def check_edit_mode():
   try:
@@ -211,14 +229,14 @@ def check_edit_mode():
   return ret
 
 def set_button_enable(enable):
-  global is_edit
+  global is_enable
   for item in buttons:
     if "button" in item:
       if enable:
         item["button"]['state'] = tk.NORMAL
       else:
         item["button"]['state'] = tk.DISABLED
-  is_edit = enable
+  is_enable = enable
 
 def cb_do_nothing():
   pass
@@ -261,12 +279,13 @@ MSG_TBL = {
   "ng": "failed",
   "timeout": "no reply"
 }
-TOPIC_EDIT_MODE = '/wpc/stat'
+TOPIC_EDIT_STAT = '/wpc/stat'
 ROSPARAM_AUTO_MODE = '/wpc/mode'
 massage = ''
 recipe_name = ''
 is_exec = False
-is_edit = False
+is_enable = True
+statcheck = 0
 
 ####Bools
 mTrue = Bool()
@@ -355,9 +374,9 @@ for n, line in enumerate(lines):
     entrys[prop["name"]].insert(0, '')
 f.close()
 
-if check_edit_mode():
-  set_button_enable(False)
-rospy.Subscriber(TOPIC_EDIT_MODE, Bool, cb_edit_mode)
+flg = not check_edit_mode()
+set_button_enable(flg)
+rospy.Subscriber(TOPIC_EDIT_STAT, Bool, cb_edit_stat)
 
 while not rospy.is_shutdown():
   timeout.update()
