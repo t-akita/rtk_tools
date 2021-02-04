@@ -38,11 +38,11 @@ def cb_publish_recipe(event):
   set_publish_recipe()
 
 def cb_publish_x0(event):
-  rospy.logerr("recipe send=/wpc/X0")
+  rospy.loginfo("Recipe:send=clear")
   pub_x0.publish(mFalse)
 
 def set_publish_recipe():
-  rospy.logerr("recipe send=%s", exec_item["p_topic"])
+  rospy.loginfo("Recipe:send=%s", exec_item["p_topic"])
   pub_msg = String()
   pub_msg.data = recipe_name
   exec_item["pub"].publish(pub_msg)
@@ -61,7 +61,7 @@ def set_event(pub_func, topic):
   except rospy.ROSException as e:
     msg_type = "timeout"
   if msg_type:
-    rospy.logerr("recipe result=%s [%s]", topic, msg_type)
+    rospy.loginfo("Recipe:result=%s [%s]", topic, msg_type)
   return msg_type
 
 def set_recipe(name,n):
@@ -71,12 +71,12 @@ def set_recipe(name,n):
   recipe_name = name
   exec_item = buttons[n]
   if "pub" in exec_item:
-    rospy.logerr("%s RecipeName='%s' start", exec_item["name"], recipe_name)
+    rospy.loginfo("Recipe:%s RecipeName='%s' start", exec_item["name"], recipe_name)
     if "s_topic" in exec_item:
       msg_type = set_event(cb_publish_recipe, exec_item["s_topic"])
       if msg_type == "ok":
         if "p_next" in exec_item:
-          msg_type = set_event(cb_publish_x0, '/wpc/Y0')
+          msg_type = set_event(cb_publish_x0, 'cleared')
     else:
       set_publish_recipe()
       msg_type = "ok"
@@ -107,19 +107,19 @@ def cb_copy(n):
     massage = 'Copy To RecipeName Empty'
   elif not os.path.exists(from_dirpath):
     massage = 'RecipeName:' + from_name + '\n' + 'Copy From folder does not exist'
-    rospy.logerr("Copy From folder does not exist RecipeName='%s'", from_name)
+    rospy.logerr("Recipe:Copy From dir does not exist RecipeName='%s'", from_name)
   elif os.path.exists(to_dirpath):
     massage = 'RecipeName:' + to_name + '\n' + 'Copy To folder exist'
-    rospy.logerr("Copy To folder exist RecipeName='%s'", to_name)
+    rospy.logerr("Recipe:Copy To dir exist RecipeName='%s'", to_name)
   else:
     func_ret = set_recipe(to_name, n)
-    rospy.logerr("copy RecipeName from='%s' to='%s'", from_name, to_name)
     commands.getoutput('cp -a '
                        + dirpath + '/' + from_name + ' '
                        + dirpath + '/' + to_name)
     massage = (exec_item["name"] + ' ' + MSG_TBL["ok"] + '\n'
                + 'From:' + from_name + '\n'
                + 'To:' + to_name)
+    rospy.loginfo("Recipe:copy RecipeName from='%s' to='%s'", from_name, to_name)
   return func_ret
 
 def cb_open_dir(n):
@@ -212,7 +212,6 @@ def cb_edit_stat(msg):
     if "stat_timeout" in Config:
       statcheck = timeout.set(cb_button_normal, Config["stat_timeout"])
   if check_button_chenge(flg):
-    rospy.logerr("recipe edit mode change edit=%d", msg.data)
     timeout.set(functools.partial(cb_button_enable, flg), 0)
 
 def check_button_chenge(enable):
@@ -221,11 +220,10 @@ def check_button_chenge(enable):
 
 def check_edit_mode():
   try:
-    val = rospy.get_param(ROSPARAM_AUTO_MODE)
+    val = rospy.get_param('~mode')
   except Exception:
     val = 0
   ret = (val == 1)
-  rospy.logerr("recipe check edit=%d", ret)
   return ret
 
 def set_button_enable(enable):
@@ -279,8 +277,6 @@ MSG_TBL = {
   "ng": "failed",
   "timeout": "no reply"
 }
-TOPIC_EDIT_STAT = '/wpc/stat'
-ROSPARAM_AUTO_MODE = '/wpc/mode'
 massage = ''
 recipe_name = ''
 is_exec = False
@@ -293,7 +289,7 @@ mTrue.data = True
 mFalse = Bool()
 
 ####sub pub
-pub_x0 = rospy.Publisher('/wpc/X0',Bool, queue_size=1)
+pub_x0 = rospy.Publisher('~clear',Bool, queue_size=1)
 
 ####Layout####
 font = (Config["font"]["family"], Config["font"]["size"], "normal")
@@ -313,9 +309,9 @@ frame.grid(sticky='ne'+'nw'+'s',padx=(5, 5), pady=(5, 5))
 iconpath = thispath + "/icon/"
 
 # p_topic topic_type is String type and Recipe Name only
-# p_next  publishe topic '/wpc/X0'
+# p_next  publishe topic '~clear'
 # s_topic topic_type is Bool and False only
-f = open(Config["dump_conf"], 'r')
+f = open(Config["panel_conf"], 'r')
 lines = f.readlines()
 row_no = -1
 for n, line in enumerate(lines):
@@ -376,7 +372,7 @@ f.close()
 
 flg = not check_edit_mode()
 set_button_enable(flg)
-rospy.Subscriber(TOPIC_EDIT_STAT, Bool, cb_edit_stat)
+rospy.Subscriber('~stat', Bool, cb_edit_stat)
 
 while not rospy.is_shutdown():
   timeout.update()
