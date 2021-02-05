@@ -76,7 +76,7 @@ def set_recipe(name,n):
       msg_type = set_event(cb_publish_recipe, exec_item["s_topic"])
       if msg_type == "ok":
         if "p_next" in exec_item:
-          msg_type = set_event(cb_publish_x0, 'cleared')
+          msg_type = set_event(cb_publish_x0, '~cleared')
     else:
       set_publish_recipe()
       msg_type = "ok"
