@@ -27,6 +27,10 @@ config:
       type: std_msgs/Bool
       timeout: 2
 
+    display:
+      color:
+        background: "#FFFFFF"
+        foreground: "#0000FF"
     display1:
       name: /wpc/recipeName
     display2:

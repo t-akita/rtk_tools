@@ -6,6 +6,7 @@ import os
 import time
 import functools
 import re
+import socket
 
 import roslib
 import rospy
@@ -37,12 +38,13 @@ Config={
 }
 
 Values={}    #Widget of Report table
-Reports=0    #Subscribed Report count 
+Reports=0    #Subscribed Report count
 Snap={}      #Log for one cycle
 Logs=[]      #Log for life cycle
+Gate=0
 
 def to_report(dat):
-  global Values,Reports,Snap
+  global Values,Reports,Snap,Gate
   if Reports>=1:
     for k,v in dat.items():
       if k in Values:
@@ -68,7 +70,9 @@ def cb_report(s):
   timeout.set(functools.partial(to_report,dic),0)
 
 def to_update():
-  global Values,Reports
+  global Values,Reports,Gate
+  if Gate>0: to_complete()
+  Gate=0
   if Reports==0:
     for row in Values.values():
       for i in range(len(row)-1,0,-1):
@@ -77,7 +81,15 @@ def to_update():
       row[0]["text"]=""
   if Reports<=1:
     if "recipe" in Config:
-      Snap["__recipe__"]=rospy.get_param(Config["recipe"])
+      recipe=rospy.get_param(Config["recipe"])
+      print "report update",recipe
+      if type(recipe) is str:
+        Snap["__recipe__"]=recipe
+      elif type(recipe) is dict:
+        Snap["__recipe__"]=recipe["name"]
+        recipe.pop("name")
+        for key in recipe:
+          Snap["__recipe__"]=Snap["__recipe__"]+":"+str(recipe[key])
       Values["__recipe__"][0].configure(text=Snap["__recipe__"])
     Reports=1
   Snap["__count__"]=len(Logs)+1
@@ -97,7 +109,8 @@ def to_complete():
         ldat.append(np.nan)
     Logs.append(ldat)
 def cb_complete(s):
-  timeout.set(to_complete,Config["delay"])
+  global Gate
+  Gate=Gate+1
 
 def cb_dump(s):
   global Reports
@@ -160,6 +173,7 @@ okcolor=Config["color"]["ok"]
 ngcolor=Config["color"]["ng"]
 
 root=tk.Tk()
+root.client(socket.gethostname())
 root.title("Report")
 root.geometry(str(Config["width"])+"x100+0"+str(Config["altitude"]))
 frame=tk.Frame(root,bd=2,background=bgcolor)
@@ -183,4 +197,4 @@ for n,s in enumerate(Config["labels"]):
 while not rospy.is_shutdown():
   timeout.update()
   root.update()
-  time.sleep(1)
+  rospy.sleep(0.1)

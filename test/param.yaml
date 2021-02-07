@@ -9,20 +9,8 @@ left:
     ROIEdge:
     - Data: [0, 0, 1280, 1024]
       Type: 1
-    ROIMarker:
-    - Data: [0, 0, 1280, 1024]
+    - Data: [10, 10, 12, 24]
       Type: 2
-right:
-  detector:
-    Binary:
-      ThBinary: [100, 150, 40, 11]
-      isBinary: true
-      isExtractFG: false
-      isRemoveBG: true
-    Labeling: {ThMaxElps: 12000, ThMinElps: 70}
-    ROIEdge:
-    - Data: [0, 0, 1280, 1024]
-      Type: 133
     ROIMarker:
     - Data: [0, 0, 1280, 1024]
       Type: 2

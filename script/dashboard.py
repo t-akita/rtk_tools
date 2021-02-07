@@ -3,7 +3,9 @@
 import numpy as np
 import sys
 import os
+import copy
 import time
+import yaml
 import commands
 import subprocess
 import functools
@@ -24,7 +26,6 @@ from dashlog import dashLog
 import timeout
 
 Config={
-#  "recipe":{"link": "recipe","dir": "recipe.d"},
   "confirm":"Stop anyway",
   "autoclose":10,
   "altitude":"+0",
@@ -34,6 +35,12 @@ Config={
     "lit": "#FF8800",
     "unlit": "#000000",
     "mask": "#666666"
+  },
+  "display":{
+    "color":{
+      "background": "#FFFF00",
+      "foreground": "#0000FF"
+    }
   },
   "icon":{
     "logo":"logo.png",
@@ -51,6 +58,7 @@ Param={
 Launches=[]
 Indicates=[]
 Displays=[]
+RecipeName=''
 
 ####dialog box control########
 msgBox=None
@@ -60,23 +68,54 @@ def cb_autoclose():
   if msgBoxWait is not None: msgBox.destroy()
   msgBoxWait=None
 ####recipe manager############
-def cb_wRecipe(s):
+def set_param_verify(name,org,dat):
+  while True:
+    ver=rospy.get_param(name)
+    if isinstance(dat,dict):
+      dav=copy.deepcopy(dat)
+      dictlib.intersect(dav,ver)
+    else:
+      dav=ver
+    if dav==dat: return
+    rospy.sleep(0.1)
+  
+def set_param_sync(name,dat):
+  for k in dat:
+    org=rospy.get_param(name+'/'+k)
+    if isinstance(dat[k],dict):
+      dictlib.merge(org,dat[k])
+    else:
+      org=dat[k]
+    rospy.set_param(name+'/'+k,org)
+#    set_param_verify(name+'/'+k,org,dat[k])
+
+def load_param(path):
+  f=open(path);
+  y=yaml.load(f)
+  f.close()
+  set_param_sync("",y)
+
+def cb_wRecipe(rc):
   if wRecipe is None: return
   wRecipe.delete(0,tk.END)
-  wRecipe.insert(0,s)
+  wRecipe.insert(0,rc)
 def cb_load(msg):
+  global Param,RecipeName
   if wRecipe is None: return
   Param["recipe"]=msg.data
+  recipe=msg.data.split(':')
+  RecipeName=recipe[0]
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
-  if os.system("ls "+dirpath+"/"+Param["recipe"])==0:
-    rospy.set_param("/dashboard",Param)
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+  if os.system("ls "+dirpath+"/"+RecipeName)==0:
+    set_param_sync("/dashboard",Param)
+    commands.getoutput("rm "+linkpath)
+    commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
     commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+    if len(recipe)>1:
+      commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
     pub_Y3.publish(mTrue)
-    pub_msg.publish("recipe_manager::cb_load "+Param["recipe"])
   else:
     pub_E3.publish(mFalse)
-    pub_msg.publish("recipe_manager::cb_load failed "+Param["recipe"])
 
 def cb_open_dir():
   global msgBox,msgBoxWait
@@ -97,7 +136,7 @@ def cb_open_dir():
     cb_load(msg)
 
 def cb_save_as():
-  global msgBox,msgBoxWait
+  global RecipeName,msgBox,msgBoxWait
   if wRecipe is None: return
   if msgBoxWait is not None: return
   msgBox=tk.Tk()
@@ -111,11 +150,13 @@ def cb_save_as():
   if ret != "":
     dir=re.sub(r".*"+Config["recipe"]["dir"],"",ret)
     recipe=dir.replace("/","")
-    commands.getoutput("cp -a "+dirpath+"/"+Param["recipe"]+" "+dirpath+"/"+recipe)
-    Param["recipe"]=recipe
+    commands.getoutput("cp -a "+dirpath+"/"+RecipeName+" "+dirpath+"/"+recipe)
+    RecipeName=recipe
+    Param["recipe"]=RecipeName
+    rospy.set_param("/dashboard",Param)
     wRecipe.delete(0,tk.END)
     wRecipe.insert(0,Param["recipe"])
-    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+Param["recipe"]+" "+linkpath)
+    commands.getoutput("rm "+linkpath+";ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
 
 ####launch manager############
 def cb_run(n):
@@ -137,6 +178,9 @@ def cb_run(n):
     item["process"]=proc
     item["state"]=1
     timeout.set(functools.partial(cb_runstat,(n,2)),3)
+    if "pre" in item:
+      print "dash pre",item["pre"]
+      subprocess.Popen(item["pre"].split())
   elif item["state"]==2:
     if "confirm" in item:
       if item["confirm"]:
@@ -160,6 +204,9 @@ def cb_run(n):
     item["process"].terminate()
     item["state"]=3
     timeout.set(functools.partial(cb_stop,n),1)
+    if "post" in item:
+      print "dash post",item["post"]
+      subprocess.Popen(item["post"].split())
 
 def cb_runstat(tpl):
   global Launches
@@ -239,8 +286,18 @@ def cb_mbox_pop():
   mbox.popup()
   ebox.popup()
 
+def parse_argv(argv):
+  args={}
+  for arg in argv:
+    tokens = arg.split(":=")
+    if len(tokens) == 2:
+      key = tokens[0]
+      args[key] = tokens[1]
+  return args
+
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
+#dictlib.merge(Config,parse_argv(sys.argv))
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -249,8 +306,11 @@ thispath=commands.getoutput("rospack find rtk_tools")
 if "load" in Config:
   commands.getoutput("rosparam load "+thispath+"/../"+Config["load"])
 if "recipe" in Config:
-  linkpath=thispath+"/../"+Config["recipe"]["link"]
-  dirpath=thispath+"/../"+Config["recipe"]["dir"]
+  srcpath=re.subn(r".*?/","/",thispath[::-1],1)[0][::-1]
+  dirpath=srcpath+Config["recipe"]["dir"]
+  linkpath=srcpath+Config["recipe"]["link"]
+  print "dirpath",dirpath
+  print "linkpath",linkpath
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
@@ -278,7 +338,7 @@ bgcolor=Config["color"]["background"]
 litcolor=Config["color"]["lit"]
 unlitcolor=Config["color"]["unlit"]
 maskcolor=Config["color"]["mask"]
-iconpath=thispath+"/icon/"
+dispattr=Config["display"];Config.pop("display")  #Patch to display
 
 root=tk.Tk()
 root.title("Dashboard")
@@ -288,6 +348,8 @@ root.geometry(str(root.winfo_screenwidth())+"x26+0"+Config["altitude"])
 root.rowconfigure(0,weight=1)
 root.overrideredirect(True)
 
+####ICONS####
+iconpath=thispath+"/icon/"
 logoicon=tk.PhotoImage(file=iconpath+Config["icon"]["logo"])
 recipeicon=tk.PhotoImage(file=iconpath+Config["icon"]["recipe"])
 starticon=tk.PhotoImage(file=iconpath+Config["icon"]["start"])
@@ -300,13 +362,14 @@ if "recipe" in Config:
   ln=commands.getoutput("ls -l "+linkpath)
   if "->" in ln:
     dst=re.sub(r".*->","",ln)
-    Param["recipe"]=re.sub(r".*/","",dst)
+    RecipeName=re.sub(r".*/","",dst)
+    Param["recipe"]=RecipeName
     rospy.set_param("/dashboard",Param)
-  commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+  commands.getoutput("rosparam load "+dirpath+"/"+RecipeName+"/param.yaml")
   tk.Label(root,image=recipeicon,bd=0,background=bgcolor).pack(side='left',fill='y',anchor='e',padx=(10,0))
   wRecipe=tk.Entry(root,font=normalfont,width=10)
   wRecipe.pack(side='left',fill='y')
-  wRecipe.insert(0,Param["recipe"])
+  wRecipe.insert(0,RecipeName)
   tk.Button(root,image=openicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_open_dir).pack(side='left',fill='y',padx=(0,5))
   tk.Button(root,image=copyicon,bd=0,background=bgcolor,highlightthickness=0,command=cb_save_as).pack(side='left',fill='y',padx=(0,30))
 else:
@@ -346,7 +409,7 @@ for key in ckeys:
     item=Config[key]
     print "item",item
     n=len(Displays)
-    wlabel=tk.Label(root,font=boldfont,background=Config["color"]["background"],foreground=litcolor)
+    wlabel=tk.Label(root,font=boldfont,background=dispattr["color"]["background"],foreground=dispattr["color"]["foreground"])
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
     item["tag"]=wlabel
     Displays.append(item)
