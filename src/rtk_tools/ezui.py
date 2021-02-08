@@ -142,7 +142,7 @@ class rtkEzui(object):
     self.pshow.grid(row=0,column=1,padx=1,pady=1,sticky='nsew')
     self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
     tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=0,column=2,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=3,padx=1,pady=1,sticky='nsew')
+    if self.prop["dump"]!="": tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=3,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
     try:
