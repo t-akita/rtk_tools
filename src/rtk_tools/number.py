@@ -1,8 +1,9 @@
 from .text import rtkText
 from . import dictlib
+from . import paramlib
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 
 import roslib
 import rospy
@@ -19,17 +20,17 @@ class rtkNumber(rtkText):
   def set(self,value):
     if type(value) is str:
       super(rtkNumber,self).set(value)
+      return
+    self.io.delete(0,tk.END)
+    if len(self.prop["format"])>0:
+      fmt="{:"+self.prop["format"]+"}"
+      self.io.insert(0,fmt.format(value))
     else:
-      self.io.delete(0,tk.END)
-      if len(self.prop["format"])>0:
-        fmt="{:"+self.prop["format"]+"}"
-        self.io.insert(0,fmt.format(value))
-      else:
-        self.io.insert(0,str(value))
-      param=eval(self.lb+str(value)+self.rb)
-      dictlib.merge(self.Param,param)
-      self.value=value
-      rospy.set_param(self.prop["name"],value)
+      self.io.insert(0,str(value))
+    param=eval(self.lb+str(value)+self.rb)
+    paramlib.set_param(self.prop["name"],value)
+    dictlib.merge(self.Param,param)
+    self.value=value
 
   def on_change(self,event):
     try:
@@ -45,7 +46,7 @@ class rtkNumber(rtkText):
 
   def on_timeout(self):
     try:
-      value=rospy.get_param(self.prop["name"])
+      value=paramlib.get_param(self.prop["name"])
       if type(value) is str:
         if "." in value:
           value=float(value)

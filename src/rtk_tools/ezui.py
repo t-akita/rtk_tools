@@ -1,12 +1,13 @@
 import yaml
 import time
 import copy
-import commands
+import subprocess
 import functools
+import os
 
-import Tkinter as tk
-import ttk
-import tkMessageBox
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
 
 import rospy
 import roslib
@@ -30,8 +31,12 @@ class rtkEzui(object):
     self.prop={
       "geom":"300x750-0+0",
       "dump":"",
+      "dump_prefix":"",
+      "dump_dir@":"",
+      "dump_ver@":"",
       "conf":"panel.ui",
       "lift":True,
+      "weight": (2, 1),
       "message":{
         "save":"Overwrite yaml",
       },
@@ -62,13 +67,34 @@ class rtkEzui(object):
     dictlib.merge(self.prop,conf)
     if type(self.prop["lift"]) is str: self.prop["lift"]=eval(self.prop["lift"])
     cf=copy.copy(conf)
-    cf.pop("geom")
-    cf.pop("dump")
-    cf.pop("conf")
-    cf.pop("lift")
+    if "geom" in cf: cf.pop("geom")
+    if "dump" in cf: cf.pop("dump")
+    if "dump_pefix" in cf: cf.pop("dump_prefix")
+    if "dump_dir@" in cf: cf.pop("dump_dir@")
+    if "dump_ver@" in cf: cf.pop("dump_ver@")
+    if "conf" in cf: cf.pop("conf")
+    if "lift" in cf: cf.pop("lift")
     dictlib.merge(rtkPage.Config,cf)
     dictlib.merge(rtkWidget.Config,cf)
-    return
+
+  def filepath(self):
+    path=self.prop["dump_prefix"]
+    try:
+      path=path+"/"+rospy.get_param(self.prop["dump_dir@"])
+    except Exception as e:
+      rospy.logwarn("dump_dir@ error")
+    try:
+      subdir=os.listdir(path)
+      subdir=filter(lambda f:os.path.isdir(os.path.join(path,f)),subdir)
+      subdir.sort()
+      path=path+"/"+subdir[int(rospy.get_param(self.prop["dump_ver@"]))]
+    except Exception as e:
+      rospy.logwarn("dump_ver@ error")
+    if len(path)>0: path=path+"/"+self.prop["dump"]
+    else: path=self.prop["dump"]
+    print("ezui::filepath",path)
+    return path
+
   def top_on(self,root):
     pane=tk.Toplevel(root)
     pane.geometry(self.prop["geom"])
@@ -80,7 +106,7 @@ class rtkEzui(object):
     f=open(self.prop["conf"],'r')
     lines=f.readlines()
     for n,line in enumerate(lines):
-      print "ezui::parsing line ",n
+      print("ezui::parsing line ",n)
       try:
         prop=eval("{"+line+"}")
       except:
@@ -100,9 +126,10 @@ class rtkEzui(object):
         continue
     f.close()
     self.ctrl=tk.Frame(self.pane,bd=2,background='#444444')
+    self.ctrl.columnconfigure(0,weight=4)
     self.ctrl.columnconfigure(1,weight=1)
-    self.ctrl.columnconfigure(2,weight=1)
-    self.ctrl.columnconfigure(3,weight=1)
+    self.ctrl.columnconfigure(2,weight=4)
+    self.ctrl.columnconfigure(3,weight=5)
     iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
@@ -110,13 +137,16 @@ class rtkEzui(object):
       self.rarricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["rarr"])
     if self.saveicon is None:
       self.saveicon=tk.PhotoImage(file=iconpath+self.prop["icon"]["save"])
-    tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=1,column=1,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=1,column=2,padx=1,pady=1,sticky='nsew')
-    tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=1,column=3,padx=1,pady=1,sticky='nsew')
+    tk.Button(self.ctrl,image=self.larricon,command=self.cb_pagebwd).grid(row=0,column=0,padx=1,pady=1,sticky='nsew')
+    self.pshow=ttk.Label(self.ctrl,font=(self.prop["font"]["family"],self.prop["font"]["size"]),anchor='c')
+    self.pshow.grid(row=0,column=1,padx=1,pady=1,sticky='nsew')
+    self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
+    tk.Button(self.ctrl,image=self.rarricon,command=self.cb_pagefwd).grid(row=0,column=2,padx=1,pady=1,sticky='nsew')
+    if self.prop["dump"]!="": tk.Button(self.ctrl,image=self.saveicon,command=self.cb_save).grid(row=0,column=3,padx=1,pady=1,sticky='nsew')
     rtkPage.show(0)
     self.ctrl.pack(fill='x',anchor='sw',expand=1)
     try:
-      filename=self.prop["dump"]
+      filename=self.filepath()
       yf=open(filename, "r")
       rtkWidget.Origin=yaml.load(yf)
       yf.close()
@@ -128,17 +158,19 @@ class rtkEzui(object):
     if rtkPage.pageNo<len(rtkPage.pages)-1:
       self.ctrl.pack_forget()
       rtkPage.show(1)
+      self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_pagebwd(self):
     if rtkPage.pageNo>0:
       self.ctrl.pack_forget()
       rtkPage.show(-1)
+      self.pshow.config(text=str(rtkPage.pageNo+1)+"/"+str(len(rtkPage.pages)))
       self.ctrl.pack(fill='x',anchor='sw',expand=1)
 
   def cb_save(self):
-    filename=self.prop["dump"]
-    f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"])
+    filename=self.filepath()
+    f=tkMessageBox.askyesno("Confirm",self.prop["message"]["save"]+"["+filename.rsplit('/',1)[1]+"]")
     if f is False: return
     try:
       yf=open(filename, "r")

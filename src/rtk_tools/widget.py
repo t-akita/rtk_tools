@@ -1,5 +1,5 @@
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 import time
 from . import dictlib
 
@@ -36,7 +36,7 @@ class rtkWidget(object):
       foreground=self.Config["color"]["label"][0],
       background=self.Config["color"]["label"][1],
       anchor="e")
-    self.label.grid(row=len(page.widgets),column=1,sticky="nsew")
+    self.label.grid(row=len(page.widgets),column=0,sticky="nsew")
     self.label.config(justify="right")
     self.timeout_=0
   def set_timeout(self,t):

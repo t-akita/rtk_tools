@@ -1,12 +1,37 @@
-config:
-  panel:
-    lift: False
-    color:
-      background: "#55FFFF"
-      label: ("#FF0000","#FFFF55")
-recipe: ZARA
-rovi:
-  live:
-    camera:
-      ExposureTime: 300000
-      Gain: 50
+left:
+  detector:
+    Binary:
+      ThBinary: [100, 150, 40, 11]
+      isBinary: true
+      isExtractFG: false
+      isRemoveBG: true
+    Labeling: {ThMaxElps: 12000, ThMinElps: 70}
+    ROIEdge:
+    - Data: [0, 0, 1280, 1024]
+      Type: 1
+    - Data: [10, 10, 12, 24]
+      Type: 2
+    ROIMarker:
+    - Data: [0, 0, 1280, 1024]
+      Type: 2
+solver:
+  Rejection: 5
+  Tolerance: 0.01
+  doICP: 0
+  doMarker: 0
+  doRotate: -1
+  isEdge: true
+  isEdgeNoisy: false
+  isEdgeVertical: false
+  isPLYWriteBinary: true
+  isPoint2Plane: true
+  isRotateAxis: true
+  isRotatePoint: true
+  isVoxel: true
+  zLimit: -350
+  zRange: [200, 450]
+
+#For testing
+wpc:
+  recipeName: REINFORCE_3
+  recipeNumber: 1

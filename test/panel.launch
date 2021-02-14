@@ -1,3 +1,8 @@
 <launch>
-  <node pkg="rtk_tools" type="panel.py" name="" args="conf:=$(find rtk_tools)/test/panel.zui" />
+  <rosparam command="load" file="$(find rtk_tools)/test/param.yaml" />
+  <node pkg="rtk_tools" type="panel.py" name="" args="
+    conf:=$(find rtk_tools)/test/panel.zui
+    geom:=400x400-0+0
+    dump:=solve.yaml"
+  output="screen" />
 </launch>

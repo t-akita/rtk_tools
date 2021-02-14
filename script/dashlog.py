@@ -1,5 +1,5 @@
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk
 import time
 
 class dashLog:

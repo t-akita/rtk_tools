@@ -1,0 +1,10 @@
+config:
+  report:
+    altitude: -25
+    rows: 4
+    format: "{:10.3f}"
+    keys: ["T00","T01","T02","T03","T10","T11","T12","T13"]
+    labels: ["T00","T01","T02","T03","T10","T11","T12","T13"]
+    recipe: /recipe
+
+recipe: Test

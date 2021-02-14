@@ -1,9 +1,9 @@
 from .topic import rtkTopic
 from . import dictlib
-import commands
+import subprocess
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+from tkinter import messagebox
 import roslib
 import rospy
 from std_msgs.msg import Bool
@@ -19,7 +19,7 @@ class rtkPub(rtkTopic):
     if self.buttonicon is None:
       self.buttonicon=tk.PhotoImage(file=iconpath+self.prop["icon"])
     self.io=tk.Button(page.frame,image=self.buttonicon,command=self.cb_pub)
-    self.io.grid(row=len(page.widgets),column=2,sticky="nswe")
+    self.io.grid(row=len(page.widgets),column=1,sticky="nswe")
 
   def cb_pub(self):
     x=self.io.winfo_rootx()

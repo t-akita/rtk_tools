@@ -1,12 +1,13 @@
 from .widget import rtkWidget
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 import time
 
 class rtkPage(object):
   Config={
-    "background":"#CCCCCC"
+    "background":"#CCCCCC",
+    "weight":(2, 1)
   }
   pages=[]
   pageNo=0
@@ -14,7 +15,8 @@ class rtkPage(object):
     self.pages.append(self)
     self.widgets=[]
     self.frame=tk.Frame(root,bd=2,background=self.Config["background"])
-    self.frame.columnconfigure(1,weight=1)
+    self.frame.columnconfigure(0,weight=self.Config["weight"][0],uniform="grp01")
+    self.frame.columnconfigure(1,weight=self.Config["weight"][1],uniform="grp01")
   @staticmethod
   def update():
     for w in rtkPage.pages[rtkPage.pageNo].widgets:

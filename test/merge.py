@@ -1,16 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import collections
 
 def merge(DCT,dct):
-  for k,v in dct.iteritems():
+  for k,v in dct.items():
     if (k in DCT and isinstance(DCT[k], dict) and isinstance(dct[k], dict)):
       merge(DCT[k],dct[k])
     else:
       DCT[k]=dct[k]
 
 def cross(DCT,dct):
-  for k,v in DCT.iteritems():
+  for k,v in DCT.items():
     if isinstance(DCT[k], dict) and (k in dct and isinstance(dct[k], dict)):
       cross(DCT[k],dct[k])
     elif k in dct:
@@ -44,4 +44,4 @@ param={
 
 cross(Param,param)
 
-print Param
+print(Param)

@@ -1,12 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import numpy as np
 import yaml
 import time
+import re
 import sys
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 
 import roslib
 import rospy
@@ -18,7 +19,7 @@ Config={
   "geom":"300x750-0+0",
   "dump":"",
   "conf":"panel.ui",
-  "lift":True,
+  "lift":False,
   "message":{
     "save":"Overwrite"
   },
@@ -37,7 +38,7 @@ Config={
 def cb_close():
   global panel
   panel=None
-  print "panel close rq"
+  print("panel close rq")
   return
 
 ################
@@ -47,6 +48,10 @@ def parse_argv(argv):
     tokens = arg.split(":=")
     if len(tokens) == 2:
       key = tokens[0]
+      if re.match(r'\([ ]*([0-9.]+,[ ]*)*[0-9.]+[ ]*\)$',tokens[1]):
+        # convert tuple-like-string to tuple
+        args[key]=eval(tokens[1])
+        continue
       args[key]=tokens[1]
   return args
 ####ROS Init####
@@ -61,18 +66,18 @@ else:
   for k in cset:
     if k in conf["color"]:
       conf["color"][k]=eval(conf["color"][k])
-      print "color tuple",k,conf["color"][k]
+      print("color tuple",k,conf["color"][k])
 try:
   dictlib.merge(Config,conf)
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 dictlib.merge(Config,parse_argv(sys.argv))
 
 ####Layout####
 root=tk.Tk()
 ttk.Style(root).theme_use("clam")
-root.title("panel")
+root.title(rospy.get_name())
 root.protocol("WM_DELETE_WINDOW", cb_close)
 root.config(background=Config["color"]["background"])
 
@@ -81,15 +86,15 @@ try:
   panel.same_on(root)
 #  panel.top_on(root)
 except Exception as e:
-  print "panel open error",e.args
+  print("panel open error",e.args)
   sys.exit(404)
-print "loop start",time.time()-t0
+print("loop start",time.time()-t0)
 while not rospy.is_shutdown():
   root.update()
   try:
     panel.update()
   except Exception as e:
-    print "panel update exception",e.args
+    print("panel update exception",e.args)
     sys.exit(0)
   time.sleep(0.01)
 
