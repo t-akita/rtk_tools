@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import numpy as np
 import sys
@@ -13,8 +13,8 @@ import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 from rtk_tools import dictlib
 from rtk_tools import timeout
 
@@ -82,7 +82,7 @@ def to_update():
   if Reports<=1:
     if "recipe" in Config:
       recipe=rospy.get_param(Config["recipe"])
-      print "report update",recipe
+      print("report update",recipe)
       if type(recipe) is str:
         Snap["__recipe__"]=recipe
       elif type(recipe) is dict:
@@ -147,7 +147,7 @@ except:
 try:
   dictlib.merge(Config,conf)
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 dictlib.merge(Config,parse_argv(sys.argv))
 

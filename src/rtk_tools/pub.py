@@ -1,9 +1,9 @@
 from .topic import rtkTopic
 from . import dictlib
-import commands
+import subprocess
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+from tkinter import messagebox
 import roslib
 import rospy
 from std_msgs.msg import Bool

@@ -1,13 +1,13 @@
 import yaml
 import time
 import copy
-import commands
+import subprocess
 import functools
 import os
 
-import Tkinter as tk
-import ttk
-import tkMessageBox
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
 
 import rospy
 import roslib
@@ -92,7 +92,7 @@ class rtkEzui(object):
       rospy.logwarn("dump_ver@ error")
     if len(path)>0: path=path+"/"+self.prop["dump"]
     else: path=self.prop["dump"]
-    print "ezui::filepath",path
+    print("ezui::filepath",path)
     return path
 
   def top_on(self,root):
@@ -106,7 +106,7 @@ class rtkEzui(object):
     f=open(self.prop["conf"],'r')
     lines=f.readlines()
     for n,line in enumerate(lines):
-      print "ezui::parsing line ",n
+      print("ezui::parsing line ",n)
       try:
         prop=eval("{"+line+"}")
       except:

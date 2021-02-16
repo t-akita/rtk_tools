@@ -2,8 +2,8 @@ from .widget import rtkWidget
 from . import dictlib
 from . import paramlib
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+from tkinter import messagebox
 
 import roslib
 import rospy

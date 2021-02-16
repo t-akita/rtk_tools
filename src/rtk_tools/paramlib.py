@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import roslib
 import rospy
@@ -35,13 +35,13 @@ def set_param(tag,sval):
 if __name__ == '__main__':
   rospy.init_node("array",anonymous=True)
   conf=get_param("/solver/Rejection")
-  print "return=",conf
+  print("return=",conf)
   conf=get_param("/left/detector/ROIEdge[1]/Type")
-  print "return=",conf
+  print("return=",conf)
   conf=get_param("/left/detector/Binary/ThBinary[3]")
-  print "return=",conf
+  print("return=",conf)
   conf=get_param("/left/detector/ROIEdge[1]/Data[2]")
-  print "return=",conf
+  print("return=",conf)
   conf=set_param("/solver/Rejection",1)
   conf=set_param("/left/detector/ROIEdge[1]/Type",2)
   conf=set_param("/left/detector/Binary/ThBinary[3]",3)

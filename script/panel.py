@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import numpy as np
 import yaml
@@ -6,8 +6,8 @@ import time
 import re
 import sys
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 
 import roslib
 import rospy
@@ -38,7 +38,7 @@ Config={
 def cb_close():
   global panel
   panel=None
-  print "panel close rq"
+  print("panel close rq")
   return
 
 ################
@@ -66,11 +66,11 @@ else:
   for k in cset:
     if k in conf["color"]:
       conf["color"][k]=eval(conf["color"][k])
-      print "color tuple",k,conf["color"][k]
+      print("color tuple",k,conf["color"][k])
 try:
   dictlib.merge(Config,conf)
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 dictlib.merge(Config,parse_argv(sys.argv))
 
@@ -86,15 +86,15 @@ try:
   panel.same_on(root)
 #  panel.top_on(root)
 except Exception as e:
-  print "panel open error",e.args
+  print("panel open error",e.args)
   sys.exit(404)
-print "loop start",time.time()-t0
+print("loop start",time.time()-t0)
 while not rospy.is_shutdown():
   root.update()
   try:
     panel.update()
   except Exception as e:
-    print "panel update exception",e.args
+    print("panel update exception",e.args)
     sys.exit(0)
   time.sleep(0.01)
 

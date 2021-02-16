@@ -1,7 +1,7 @@
 from .widget import rtkWidget
 
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 
 class rtkTitle(rtkWidget):
   def __init__(self,page,prop):
