@@ -32,9 +32,11 @@ config:
         background: "#FFFFFF"
         foreground: "#0000FF"
     display1:
-      name: /wpc/recipeName
-    display2:
+      label: "サブレシピ番号："
       name: /wpc/recipeNumber
+    display2:
+      label: "レシピ名："
+      name: /wpc/recipeName
 
   panel:
     lift: False
