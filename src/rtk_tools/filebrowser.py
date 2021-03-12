@@ -1401,7 +1401,7 @@ class FileBrowser(tk.Toplevel):
                     try:
                         cst.showerror(_("Error"),_("Cannot overwrite {file}").format(file=name),icon="warning",parent=self)
                     except Exception as e:
-                        print "Message box forced closed"
+                        print("Message box forced closed")
                         return
                     rep = None
                 elif not exists(dirname(path)):
@@ -1567,3 +1567,4 @@ def asksaveasfilename(parent=None, title=_("Save As"), **kwargs):
     dialog = FileBrowser(parent, mode="save", title=title, **kwargs)
     dialog.wait_window(dialog)
     return dialog.get_result()
+

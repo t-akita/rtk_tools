@@ -1,7 +1,7 @@
 from .topic import rtkTopic
 
-import Tkinter as tk
-import tkMessageBox
+import tkinter as tk
+from tkinter import messagebox
 import subprocess
 import roslib
 import rospy

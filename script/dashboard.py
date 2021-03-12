@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
  
 import numpy as np
 import sys
@@ -6,7 +6,6 @@ import os
 import copy
 import time
 import yaml
-import commands
 import subprocess
 import functools
 import re
@@ -17,8 +16,8 @@ import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import String
  
-import Tkinter as tk
-import pymsgbox
+import tkinter as tk
+#import pymsgbox
 from tkfilebrowser import askopendirname
 from rtk_tools.filebrowser import asksaveasfilename
 from rtk_tools import dictlib
@@ -97,11 +96,11 @@ def cb_load(msg):
   timeout.set(functools.partial(cb_wRecipe,Param["recipe"]),0)
   if os.system("ls "+dirpath+"/"+RecipeName)==0:
     set_param_sync("/dashboard",Param)
-    commands.getoutput("rm "+linkpath)
-    commands.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
-    commands.getoutput("rosparam load "+linkpath+"/param.yaml")
+    subprocess.getoutput("rm "+linkpath)
+    subprocess.getoutput("ln -s "+dirpath+"/"+RecipeName+" "+linkpath)
+    subprocess.getoutput("rosparam load "+linkpath+"/param.yaml")
     if len(recipe)>1:
-      commands.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
+      subprocess.getoutput("rosparam load "+linkpath+"/"+str(recipe[1])+".yaml")
     pub_Y3.publish(mTrue)
   else:
     pub_E3.publish(mFalse)
@@ -197,7 +196,7 @@ def cb_run(n):
       item["state"]=1
       timeout.set(functools.partial(cb_runstat,n),3)
       if "pre" in item:
-        print "dash pre",item["pre"]
+        print("dash pre",item["pre"])
         subprocess.Popen(item["pre"].split())
   elif item["state"]==2:
     if "confirm" in item:
@@ -322,7 +321,7 @@ def cb_button(n):
 
     pub_msg=Bool()
     if f.startswith('C'): #Cancel
-      print "Button cancel:",item["label"]
+      print("Button cancel:",item["label"])
     else:
       if f.startswith('O'): #OK
         pub_msg.data=True
@@ -370,7 +369,7 @@ def parse_argv(argv):
 ########################################################
 rospy.init_node("dashboard",anonymous=True)
 dictlib.merge(Config,parse_argv(sys.argv))
-thispath=commands.getoutput("rospack find rtk_tools")
+thispath=subprocess.getoutput("rospack find rtk_tools")
 init_load=None
 if "load" in Config:
   init_load=Config["load"]
@@ -385,11 +384,11 @@ if "load" in Config:
   try:
     dictlib.merge(Config,conf["config"]["dashboard"])
   except Exception as e:
-    print "first load marge error:",e.args
+    print("first load marge error:",e.args)
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
 
 if "load" in Config:
   if init_load != Config["load"]:
@@ -402,17 +401,17 @@ if "load" in Config:
     try:
       dictlib.merge(Config,conf["config"]["dashboard"])
     except Exception as e:
-      print "second load marge error:",e.args
+      print("second load marge error:",e.args)
 if "recipe" in Config:
   srcpath=re.subn(r".*?/","/",thispath[::-1],1)[0][::-1]
   dirpath=srcpath+Config["recipe"]["dir"]
   linkpath=srcpath+Config["recipe"]["link"]
-  print "dirpath",dirpath
-  print "linkpath",linkpath
+  print("dirpath",dirpath)
+  print("linkpath",linkpath)
 try:
   dictlib.merge(Config,rospy.get_param("/config/dashboard"))
 except Exception as e:
-  print "get_param exception:",e.args
+  print("get_param exception:",e.args)
  
 ####Bools
 mTrue=Bool()
@@ -480,7 +479,7 @@ for key in ckeys:
     item=Config[key]
     if "file" not in item: continue
     n=len(Launches)
-    print "item",item
+    print("item",item)
     wlabel=tk.Label(root,text=item["label"],font=normalfont,background=maskcolor,foreground=unlitcolor)
     wlabel.pack(side='left',fill='y',anchor='w')
     wbtn=tk.Button(root,image=starticon,background=bgcolor,bd=0,highlightthickness=0,command=functools.partial(cb_run,n))
@@ -506,7 +505,7 @@ for key in ckeys:
     Indicates.append(item)
   elif key.startswith('disp'):
     item=Config[key]
-    print "item",item
+    print("item",item)
     n=len(Displays)
     wlabel=tk.Label(root,font=boldfont,background=dispattr["color"]["background"],foreground=dispattr["color"]["foreground"])
     wlabel.pack(side='right',fill='y',anchor='e',padx=(0,5))
