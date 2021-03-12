@@ -7,7 +7,7 @@ import os
 
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
+from tkinter import messagebox as tkMessageBox
 
 import rospy
 import roslib
@@ -130,7 +130,7 @@ class rtkEzui(object):
     self.ctrl.columnconfigure(1,weight=1)
     self.ctrl.columnconfigure(2,weight=4)
     self.ctrl.columnconfigure(3,weight=5)
-    iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
+    iconpath=subprocess.getoutput("rospack find rtk_tools")+"/icon/"
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
     if self.rarricon is None:
