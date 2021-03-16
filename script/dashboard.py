@@ -383,10 +383,15 @@ if "load" in Config:
   yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
       lambda loader, node: OrderedDict(loader.construct_pairs(node)))
   try:
-    conf=yaml.load(file(yamlpath))
+    # 2021/03/16 hato ------------------------------ start ------------------------------
+    #conf=yaml.load(file(yamlpath))
+    with open(yamlpath) as file:
+      conf = yaml.safe_load(file)
+    # 2021/03/16 hato ------------------------------  end  ------------------------------
+    
     # 2021/03/16 hato ------------------------------ start ------------------------------
     # commands.getoutput("rosparam load "+yamlpath)
-    subprocess.getoutput("rosparam load "+yamlpath)
+      subprocess.getoutput("rosparam load "+yamlpath)
     # 2021/03/16 hato ------------------------------  end  ------------------------------
   except:
     conf={}
@@ -403,10 +408,15 @@ if "load" in Config:
   if init_load != Config["load"]:
     yamlpath=thispath+"/../"+Config["load"]
     try:
-      conf=yaml.load(file(yamlpath))
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # conf=yaml.load(file(yamlpath))
+      with open(yamlpath) as file:
+        conf = yaml.safe_load(file)
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
+      
       # 2021/03/16 hato ------------------------------ start ------------------------------
       # commands.getoutput("rosparam load "+yamlpath)
-      subprocess.getoutput("rosparam load "+yamlpath)
+        subprocess.getoutput("rosparam load "+yamlpath)
       # 2021/03/16 hato ------------------------------  end  ------------------------------
     except:
       conf={}

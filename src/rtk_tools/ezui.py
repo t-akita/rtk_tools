@@ -151,7 +151,10 @@ class rtkEzui(object):
     try:
       filename=self.filepath()
       yf=open(filename, "r")
-      rtkWidget.Origin=yaml.load(yf)
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # rtkWidget.Origin=yaml.load(yf)
+      rtkWidget.Origin=yaml.safe_load(yf)
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
       yf.close()
     except:
       rospy.logwarn("ezui::origin parameter load error "+filename)
@@ -181,7 +184,10 @@ class rtkEzui(object):
       rospy.logwarn("ezui::open exception "+filename)
       return
     try:
-      param=yaml.load(yf)
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # param=yaml.load(yf)
+      param=yaml.safe_load(yf)
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
     except:
       yf.close()
       rospy.logwarn("ezui::parser exception")
