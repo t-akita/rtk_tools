@@ -18,7 +18,10 @@ class rtkTopic(rtkWidget):
       self.on_connect(topic_type)
       self.discon=False
     except:
-      print "rtkTopic::["+self.prop["name"]+"] not registered"
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # print "rtkTopic::["+self.prop["name"]+"] not registered"
+      print("rtkTopic::["+self.prop["name"]+"] not registered")
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
   def __init__(self,page,prop):
     super(rtkTopic,self).__init__(page,prop)
     self.discon=True

@@ -50,11 +50,20 @@ def trim(f):
 
 if len(sys.argv)>1:
   if sys.argv[1]=='trim':
-    print 'run as trim mode'
+    # 2021/03/16 hato ------------------------------ start ------------------------------
+    # print 'run as trim mode'
+    print('run as trim mode')
+    # 2021/03/16 hato ------------------------------  end  ------------------------------
     map(trim,files)
   else:
-    print 'run as merge mode'
+    # 2021/03/16 hato ------------------------------ start ------------------------------
+    # print 'run as merge mode'
+    print('run as merge mode')
+    # 2021/03/16 hato ------------------------------  end  ------------------------------
     map(merge,files)
 else:
-  print 'run as merge mode'
+  # 2021/03/16 hato ------------------------------ start ------------------------------
+  #print 'run as merge mode'
+  print('run as merge mode')
+  # 2021/03/16 hato ------------------------------ start ------------------------------
   map(merge,files)
