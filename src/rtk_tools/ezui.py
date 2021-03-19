@@ -7,7 +7,7 @@ import os
 
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox as tkMessageBox
+from tkinter import messagebox
 
 import rospy
 import roslib
@@ -130,7 +130,10 @@ class rtkEzui(object):
     self.ctrl.columnconfigure(1,weight=1)
     self.ctrl.columnconfigure(2,weight=4)
     self.ctrl.columnconfigure(3,weight=5)
+    # 2021/03/16 hato ------------------------------ start ------------------------------
+    # iconpath=commands.getoutput("rospack find rtk_tools")+"/icon/"
     iconpath=subprocess.getoutput("rospack find rtk_tools")+"/icon/"
+    # 2021/03/16 hato ------------------------------  end  ------------------------------
     if self.larricon is None:
       self.larricon=tk.PhotoImage(file=iconpath+self.prop["icon"]["larr"])
     if self.rarricon is None:
@@ -148,7 +151,10 @@ class rtkEzui(object):
     try:
       filename=self.filepath()
       yf=open(filename, "r")
-      rtkWidget.Origin=yaml.load(yf)
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # rtkWidget.Origin=yaml.load(yf)
+      rtkWidget.Origin=yaml.safe_load(yf)
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
       yf.close()
     except:
       rospy.logwarn("ezui::origin parameter load error "+filename)
@@ -178,7 +184,10 @@ class rtkEzui(object):
       rospy.logwarn("ezui::open exception "+filename)
       return
     try:
-      param=yaml.load(yf)
+      # 2021/03/16 hato ------------------------------ start ------------------------------
+      # param=yaml.load(yf)
+      param=yaml.safe_load(yf)
+      # 2021/03/16 hato ------------------------------  end  ------------------------------
     except:
       yf.close()
       rospy.logwarn("ezui::parser exception")
